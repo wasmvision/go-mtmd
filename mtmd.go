@@ -52,16 +52,23 @@ type ContextParamsType struct {
 }
 
 var (
-	TypeContextParams = ffi.NewType(&ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32)
+	TypeContextParams    = ffi.NewType(&ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32)
+	TypeLlamaModelParams = ffi.NewType(&ffi.TypePointer, &ffi.TypePointer, &ffi.TypeSint32,
+		&ffi.TypeSint32, &ffi.TypeSint32,
+		&ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer,
+		&ffi.TypeUint8, &ffi.TypeUint8, &ffi.TypeUint8, &ffi.TypeUint8, &ffi.TypeUint8)
 )
 
 var (
-	// registerLibFunc(&llamaBackendInit, libHandle, "llama_backend_init")
 	BackendInit     func()
 	backendInitFunc ffi.Fun
 
 	BackendFree     func()
 	backendFreeFunc ffi.Fun
+
+	// GGML_API void ggml_backend_load_all(void);
+	GGMLBackendLoadAll     func()
+	ggmlBackendLoadAllFunc ffi.Fun
 
 	// MTMD_API const char * mtmd_default_marker(void);
 	// DefaultMarker     func() string
@@ -71,10 +78,24 @@ var (
 	ContextParamsDefault     func() ContextParamsType
 	contextParamsDefaultFunc ffi.Fun
 
+	// LLAMA_API struct llama_model_params          llama_model_default_params(void);
+	LlamaModelDefaultParams     func() LlamaModelParams
+	llamaModelDefaultParamsFunc ffi.Fun
+
+	// LLAMA_API struct llama_model * llama_model_load_from_file(
+	//                          const char * path_model,
+	//           				struct llama_model_params   params);
+	LlamaModelLoadFromFile     func(pathModel string, params LlamaModelParams) LlamaModel
+	llamaModelLoadFromFileFunc ffi.Fun
+
+	// LLAMA_API struct llama_model_params          llama_model_default_params(void);
+	LlamaModelFree     func(model LlamaModel)
+	llamaModelFreeFunc ffi.Fun
+
 	// MTMD_API mtmd_context * mtmd_init_from_file(const char * mmproj_fname,
 	//                                         const struct llama_model * text_model,
 	//                                         const struct mtmd_context_params ctx_params);
-	InitFromFile func(mmprojFname string, textModel uintptr, ctxParams ContextParamsType) *Context
+	InitFromFile func(mmprojFname string, model LlamaModel, ctxParams ContextParamsType) *Context
 )
 
 var currentLib ffi.Lib
@@ -118,6 +139,15 @@ func Init() {
 		backendFreeFunc.Call(nil)
 	}
 
+	ggmlBackendLoadAllFunc, err = currentLib.Prep("ggml_backend_load_all", &ffi.TypeVoid)
+	if err != nil {
+		panic(err)
+	}
+
+	GGMLBackendLoadAll = func() {
+		ggmlBackendLoadAllFunc.Call(nil)
+	}
+
 	contextParamsDefaultFunc, err = currentLib.Prep("mtmd_context_params_default", &TypeContextParams)
 	if err != nil {
 		panic(err)
@@ -127,6 +157,38 @@ func Init() {
 		var ctx ContextParamsType
 		contextParamsDefaultFunc.Call(unsafe.Pointer(&ctx))
 		return ctx
+	}
+
+	llamaModelDefaultParamsFunc, err = currentLib.Prep("llama_model_default_params", &TypeLlamaModelParams)
+	if err != nil {
+		panic(err)
+	}
+
+	LlamaModelDefaultParams = func() LlamaModelParams {
+		var p LlamaModelParams
+		llamaModelDefaultParamsFunc.Call(unsafe.Pointer(&p))
+		return p
+	}
+
+	llamaModelLoadFromFileFunc, err = currentLib.Prep("llama_model_load_from_file", &ffi.TypePointer, &ffi.TypePointer, &TypeLlamaModelParams)
+	if err != nil {
+		panic(err)
+	}
+
+	LlamaModelLoadFromFile = func(pathModel string, params LlamaModelParams) LlamaModel {
+		var model LlamaModel
+		file := &[]byte(pathModel + "\x00")[0]
+		llamaModelLoadFromFileFunc.Call(unsafe.Pointer(&model), unsafe.Pointer(&file), unsafe.Pointer(&params))
+		return model
+	}
+
+	llamaModelFreeFunc, err = currentLib.Prep("llama_model_free", &ffi.TypeVoid, &ffi.TypePointer)
+	if err != nil {
+		panic(err)
+	}
+
+	LlamaModelFree = func(model LlamaModel) {
+		llamaModelFreeFunc.Call(nil, unsafe.Pointer(&model))
 	}
 
 	// defaultMarkerFunc, err = currentLib.Prep("mtmd_default_marker", &ffi.TypeUint8)
