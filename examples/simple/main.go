@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/wasmvision/go-mtmd"
+	"github.com/wasmvision/go-mtmd/pkg/llama"
+	"github.com/wasmvision/go-mtmd/pkg/loader"
+	"github.com/wasmvision/go-mtmd/pkg/mtmd"
 )
 
 var (
@@ -12,29 +14,27 @@ var (
 
 func main() {
 	fmt.Println("loading libs")
-	mtmd.LoadLibrary()
+	lib := loader.LoadLibrary("./lib")
 
 	fmt.Println("init libs")
-	mtmd.Init()
-
-	// fmt.Println("backend init")
-	// mtmd.BackendInit()
+	llama.Init(lib)
+	mtmd.Init(lib)
 
 	fmt.Println("loading all GGML backends")
-	mtmd.GGMLBackendLoadAll()
+	llama.GGMLBackendLoadAll()
 
 	ctx := mtmd.ContextParamsDefault()
 	fmt.Println("useGPU?", ctx.UseGPU)
 
-	params := mtmd.LlamaModelDefaultParams()
+	params := llama.LlamaModelDefaultParams()
 	fmt.Println("MainGpu:", params.MainGpu)
 
 	fmt.Println("Loading model", file)
-	model := mtmd.LlamaModelLoadFromFile(file, params)
+	model := llama.LlamaModelLoadFromFile(file, params)
 
 	fmt.Println("model free")
-	mtmd.LlamaModelFree(model)
+	llama.LlamaModelFree(model)
 
 	fmt.Println("backend free")
-	mtmd.BackendFree()
+	llama.BackendFree()
 }

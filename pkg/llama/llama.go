@@ -1,4 +1,4 @@
-package mtmd
+package llama
 
 // Common types matching llama.cpp
 type (
