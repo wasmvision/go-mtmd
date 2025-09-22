@@ -45,6 +45,9 @@ func main() {
 		fmt.Println("model free")
 	}()
 
+	marker := mtmd.DefaultMarker()
+	fmt.Println("default marker", marker)
+
 	ctxParams := mtmd.ContextParamsDefault()
 	fmt.Printf("%+v\n", ctxParams)
 

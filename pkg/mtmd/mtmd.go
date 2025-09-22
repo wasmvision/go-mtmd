@@ -5,6 +5,7 @@ import (
 
 	"github.com/jupiterrider/ffi"
 	"github.com/wasmvision/go-mtmd/pkg/llama"
+	"golang.org/x/sys/unix"
 )
 
 // enum mtmd_input_chunk_type
@@ -56,8 +57,8 @@ var (
 
 var (
 	// MTMD_API const char * mtmd_default_marker(void);
-	// DefaultMarker     func() string
-	// defaultMarkerFunc ffi.Fun
+	DefaultMarker     func() string
+	defaultMarkerFunc ffi.Fun
 
 	// MTMD_API struct mtmd_context_params mtmd_context_params_default(void);
 	ContextParamsDefault     func() ContextParamsType
@@ -80,6 +81,17 @@ var (
 
 func Init(currentLib ffi.Lib) {
 	var err error
+
+	defaultMarkerFunc, err = currentLib.Prep("mtmd_default_marker", &ffi.TypePointer)
+	if err != nil {
+		panic(err)
+	}
+
+	DefaultMarker = func() string {
+		var marker *byte
+		defaultMarkerFunc.Call(unsafe.Pointer(&marker))
+		return unix.BytePtrToString(marker)
+	}
 
 	contextParamsDefaultFunc, err = currentLib.Prep("mtmd_context_params_default", &TypeContextParams)
 	if err != nil {
