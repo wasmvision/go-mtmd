@@ -14,7 +14,7 @@ var (
 
 func main() {
 	fmt.Println("loading libs")
-	lib := loader.LoadLibrary("./lib")
+	lib := loader.LoadLibrary("../../lib")
 
 	fmt.Println("init libs")
 	llama.Init(lib)
@@ -26,14 +26,14 @@ func main() {
 	ctx := mtmd.ContextParamsDefault()
 	fmt.Println("useGPU?", ctx.UseGPU)
 
-	params := llama.LlamaModelDefaultParams()
+	params := llama.ModelDefaultParams()
 	fmt.Println("MainGpu:", params.MainGpu)
 
 	fmt.Println("Loading model", file)
-	model := llama.LlamaModelLoadFromFile(file, params)
+	model := llama.ModelLoadFromFile(file, params)
 
 	fmt.Println("model free")
-	llama.LlamaModelFree(model)
+	llama.ModelFree(model)
 
 	fmt.Println("backend free")
 	llama.BackendFree()

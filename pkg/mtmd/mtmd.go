@@ -67,7 +67,7 @@ var (
 	// MTMD_API mtmd_context * mtmd_init_from_file(const char * mmproj_fname,
 	//                                         const struct llama_model * text_model,
 	//                                         const struct mtmd_context_params ctx_params);
-	InitFromFile func(mmprojFname string, model llama.LlamaModel, ctxParams ContextParamsType) *Context
+	InitFromFile func(mmprojFname string, model llama.Model, ctxParams ContextParamsType) *Context
 )
 
 func Init(currentLib ffi.Lib) {
