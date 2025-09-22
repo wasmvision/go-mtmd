@@ -29,7 +29,6 @@ type InputTextType struct {
 
 // Opaque types (represented as pointers)
 type Context uintptr
-type Bitmap uintptr
 type ImageTokens uintptr
 type InputChunk uintptr
 type InputChunks uintptr
@@ -125,4 +124,6 @@ func Init(currentLib ffi.Lib) {
 
 		return result.Bool()
 	}
+
+	initBitmapFuncs(currentLib)
 }
