@@ -45,14 +45,14 @@ type InputChunks uintptr
 type ContextParamsType struct {
 	UseGPU       bool
 	PrintTimings bool
-	Threads      int
-	Verbosity    uint32
-	ImageMarker  uintptr
-	MediaMarker  uintptr
+	Threads      int32
+	Verbosity    llama.LogLevel
+	ImageMarker  *byte
+	MediaMarker  *byte
 }
 
 var (
-	TypeContextParams = ffi.NewType(&ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32)
+	TypeContextParams = ffi.NewType(&ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer)
 )
 
 var (
@@ -67,7 +67,16 @@ var (
 	// MTMD_API mtmd_context * mtmd_init_from_file(const char * mmproj_fname,
 	//                                         const struct llama_model * text_model,
 	//                                         const struct mtmd_context_params ctx_params);
-	InitFromFile func(mmprojFname string, model llama.Model, ctxParams ContextParamsType) *Context
+	InitFromFile     func(mmprojFname string, model llama.Model, ctxParams ContextParamsType) Context
+	initFromFileFunc ffi.Fun
+
+	// MTMD_API void mtmd_free(mtmd_context * ctx);
+	Free     func(ctx Context)
+	freeFunc ffi.Fun
+
+	// MTMD_API bool mtmd_support_vision(mtmd_context * ctx);
+	SupportVision     func(ctx Context) bool
+	supportVisionFunc ffi.Fun
 )
 
 func Init(currentLib ffi.Lib) {
@@ -84,15 +93,36 @@ func Init(currentLib ffi.Lib) {
 		return ctx
 	}
 
-	// defaultMarkerFunc, err = currentLib.Prep("mtmd_default_marker", &ffi.TypeUint8)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	initFromFileFunc, err = currentLib.Prep("mtmd_init_from_file", &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &TypeContextParams)
+	if err != nil {
+		panic(err)
+	}
 
-	// DefaultMarker = func() string {
-	// 	var result ffi.Arg
-	// 	defaultMarkerFunc.Call(result)
+	InitFromFile = func(mmprojFname string, model llama.Model, ctxParams ContextParamsType) Context {
+		var ctx Context
+		file := &[]byte(mmprojFname + "\x00")[0]
+		initFromFileFunc.Call(unsafe.Pointer(&ctx), unsafe.Pointer(&file), unsafe.Pointer(&model), unsafe.Pointer(&ctxParams))
+		return ctx
+	}
 
-	// 	return unix.BytePtrToString(result)
-	// }
+	freeFunc, err = currentLib.Prep("mtmd_free", &ffi.TypeVoid, &ffi.TypePointer)
+	if err != nil {
+		panic(err)
+	}
+
+	Free = func(ctx Context) {
+		freeFunc.Call(nil, unsafe.Pointer(&ctx))
+	}
+
+	supportVisionFunc, err = currentLib.Prep("mtmd_support_vision", &ffi.TypeUint8, &ffi.TypePointer)
+	if err != nil {
+		panic(err)
+	}
+
+	SupportVision = func(ctx Context) bool {
+		var result ffi.Arg
+		supportVisionFunc.Call(&result, unsafe.Pointer(&ctx))
+
+		return result.Bool()
+	}
 }

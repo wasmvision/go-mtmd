@@ -37,6 +37,19 @@ var (
 	// LLAMA_API struct llama_model_params          llama_model_default_params(void);
 	ModelFree     func(model Model)
 	modelFreeFunc ffi.Fun
+
+	// LLAMA_API const struct llama_vocab * llama_model_get_vocab(const struct llama_model * model);
+	ModelGetVocab     func(model Model) Vocab
+	modelGetVocabFunc ffi.Fun
+
+	// LLAMA_API struct llama_batch llama_batch_init(
+	//         int32_t n_tokens,
+	BatchInit     func(nTokens int32, embd int32, nSeqMax int32) Batch
+	batchInitFunc ffi.Fun
+
+	// LLAMA_API void llama_batch_free(struct llama_batch batch);
+	BatchFree     func(batch Batch)
+	batchFreeFunc ffi.Fun
 )
 
 func Init(currentLib ffi.Lib) {
@@ -100,15 +113,24 @@ func Init(currentLib ffi.Lib) {
 		modelFreeFunc.Call(nil, unsafe.Pointer(&model))
 	}
 
-	// defaultMarkerFunc, err = currentLib.Prep("mtmd_default_marker", &ffi.TypeUint8)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	batchInitFunc, err = currentLib.Prep("llama_batch_init", &ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32)
+	if err != nil {
+		panic(err)
+	}
 
-	// DefaultMarker = func() string {
-	// 	var result ffi.Arg
-	// 	defaultMarkerFunc.Call(result)
+	BatchInit = func(nTokens int32, embd int32, nSeqMax int32) Batch {
+		var batch Batch
+		batchInitFunc.Call(unsafe.Pointer(&batch), nTokens, embd, nSeqMax)
 
-	// 	return unix.BytePtrToString(result)
-	// }
+		return batch
+	}
+
+	batchFreeFunc, err = currentLib.Prep("llama_batch_free", &ffi.TypeVoid, &ffi.TypePointer)
+	if err != nil {
+		panic(err)
+	}
+
+	BatchFree = func(batch Batch) {
+		batchFreeFunc.Call(nil, unsafe.Pointer(&batch))
+	}
 }

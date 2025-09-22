@@ -162,6 +162,17 @@ func (b GpuBackend) String() string {
 	}
 }
 
+type LogLevel int32
+
+const (
+	LogLevelNone     LogLevel = 0
+	LogLevelDebug    LogLevel = 1
+	LogLevelInfo     LogLevel = 2
+	LogLevelWarn     LogLevel = 3
+	LogLevelError    LogLevel = 4
+	LogLevelContinue LogLevel = 5
+)
+
 // Opaque types (represented as pointers)
 type Model uintptr
 type Context uintptr

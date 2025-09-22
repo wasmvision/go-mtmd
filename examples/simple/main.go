@@ -9,12 +9,14 @@ import (
 )
 
 var (
-	file = "/home/ron/Development/gollama.cpp/models/tinyllama-1.1b-chat-v1.0.Q2_K.gguf"
+	//file = "/home/ron/Development/gollama.cpp/models/tinyllama-1.1b-chat-v1.0.Q2_K.gguf"
+	modelFile = "/home/ron/Development/go-mtmd/models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf"
+	projFile  = "/home/ron/Development/go-mtmd/models/mmproj-Qwen2.5-VL-3B-Instruct-Q8_0.gguf"
 )
 
 func main() {
 	fmt.Println("loading libs")
-	lib := loader.LoadLibrary("../../lib")
+	lib := loader.LoadLibrary(".")
 
 	fmt.Println("init libs")
 	llama.Init(lib)
@@ -22,19 +24,31 @@ func main() {
 
 	fmt.Println("loading all GGML backends")
 	llama.GGMLBackendLoadAll()
-
-	ctx := mtmd.ContextParamsDefault()
-	fmt.Println("useGPU?", ctx.UseGPU)
+	defer func() {
+		fmt.Println("backend free")
+		llama.BackendFree()
+	}()
 
 	params := llama.ModelDefaultParams()
-	fmt.Println("MainGpu:", params.MainGpu)
+	fmt.Printf("%+v\n", params)
 
-	fmt.Println("Loading model", file)
-	model := llama.ModelLoadFromFile(file, params)
+	fmt.Println("Loading model", modelFile)
+	model := llama.ModelLoadFromFile(modelFile, params)
+	defer func() {
+		llama.ModelFree(model)
+		fmt.Println("model free")
+	}()
 
-	fmt.Println("model free")
-	llama.ModelFree(model)
+	ctxParams := mtmd.ContextParamsDefault()
+	fmt.Printf("%+v\n", ctxParams)
 
-	fmt.Println("backend free")
-	llama.BackendFree()
+	ctxParams.UseGPU = false
+	ctxParams.Verbosity = llama.LogLevelError
+
+	fmt.Println("Loading projector", projFile)
+	mtmdCtx := mtmd.InitFromFile(projFile, model, ctxParams)
+	defer func() {
+		mtmd.Free(mtmdCtx)
+		fmt.Println("mtmd context free")
+	}()
 }
