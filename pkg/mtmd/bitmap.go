@@ -29,6 +29,14 @@ var (
 	// MTMD_API void                  mtmd_bitmap_free       (mtmd_bitmap * bitmap);
 	BitmapFree     func(bitmap Bitmap)
 	bitmapFreeFunc ffi.Fun
+
+	// MTMD_API size_t                mtmd_bitmap_get_n_bytes(const mtmd_bitmap * bitmap);
+	BitmapGetNBytes     func(bitmap Bitmap) uint32
+	bitmapGetNBytesFunc ffi.Fun
+
+	// MTMD_API mtmd_bitmap * mtmd_helper_bitmap_init_from_file(mtmd_context * ctx, const char * fname);
+	BitmapInitFromFile     func(ctx Context, fname string) Bitmap
+	bitmapInitFromFileFunc ffi.Fun
 )
 
 func initBitmapFuncs(currentLib ffi.Lib) {
@@ -53,5 +61,30 @@ func initBitmapFuncs(currentLib ffi.Lib) {
 
 	BitmapFree = func(bitmap Bitmap) {
 		bitmapFreeFunc.Call(nil, unsafe.Pointer(&bitmap))
+	}
+
+	bitmapGetNBytesFunc, err = currentLib.Prep("mtmd_bitmap_get_n_bytes", &ffi.TypeUint32, &ffi.TypePointer)
+	if err != nil {
+		panic(err)
+	}
+
+	BitmapGetNBytes = func(bitmap Bitmap) uint32 {
+		var result ffi.Arg
+		bitmapGetNBytesFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&bitmap))
+
+		return uint32(result)
+	}
+
+	bitmapInitFromFileFunc, err = currentLib.Prep("mtmd_helper_bitmap_init_from_file", &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer)
+	if err != nil {
+		panic(err)
+	}
+
+	BitmapInitFromFile = func(ctx Context, fname string) Bitmap {
+		var bitmap Bitmap
+		file := &[]byte(fname + "\x00")[0]
+		bitmapInitFromFileFunc.Call(unsafe.Pointer(&bitmap), unsafe.Pointer(&ctx), unsafe.Pointer(&file))
+
+		return bitmap
 	}
 }

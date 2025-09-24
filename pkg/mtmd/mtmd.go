@@ -1,6 +1,7 @@
 package mtmd
 
 import (
+	"fmt"
 	"unsafe"
 
 	"github.com/jupiterrider/ffi"
@@ -22,7 +23,7 @@ const (
 //	    bool add_special;
 //	    bool parse_special;
 //	};
-type InputTextType struct {
+type InputText struct {
 	Text         *byte
 	AddSpecial   bool
 	ParseSpecial bool
@@ -52,7 +53,8 @@ type ContextParamsType struct {
 }
 
 var (
-	TypeContextParams = ffi.NewType(&ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer)
+	TypeContextParams = ffi.NewType(&ffi.TypeUint8, &ffi.TypeUint8, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer)
+	TypeInputText     = ffi.NewType(&ffi.TypePointer, &ffi.TypeUint8, &ffi.TypeUint8)
 )
 
 var (
@@ -77,6 +79,18 @@ var (
 	// MTMD_API bool mtmd_support_vision(mtmd_context * ctx);
 	SupportVision     func(ctx Context) bool
 	supportVisionFunc ffi.Fun
+
+	// MTMD_API mtmd_input_chunks *      mtmd_input_chunks_init(void);
+	InputChunksInit     func() InputChunks
+	inputChunksInitFunc ffi.Fun
+
+	// MTMD_API int32_t mtmd_tokenize(mtmd_context * ctx,
+	//                            mtmd_input_chunks * output,
+	//                            const mtmd_input_text * text,
+	//                            const mtmd_bitmap ** bitmaps,
+	//                            size_t n_bitmaps);
+	Tokenize     func(ctx Context, out InputChunks, text *InputText, bitmaps *Bitmap, nBitmaps uint64) int32
+	tokenizeFunc ffi.Fun
 )
 
 func Init(currentLib ffi.Lib) {
@@ -135,6 +149,31 @@ func Init(currentLib ffi.Lib) {
 		supportVisionFunc.Call(&result, unsafe.Pointer(&ctx))
 
 		return result.Bool()
+	}
+
+	inputChunksInitFunc, err = currentLib.Prep("mtmd_input_chunks_init", &ffi.TypePointer)
+	if err != nil {
+		panic(err)
+	}
+
+	InputChunksInit = func() InputChunks {
+		var chunks InputChunks
+		inputChunksInitFunc.Call(unsafe.Pointer(&chunks))
+
+		return chunks
+	}
+
+	tokenizeFunc, err = currentLib.Prep("mtmd_tokenize", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypeUint64)
+	if err != nil {
+		panic(err)
+	}
+
+	Tokenize = func(ctx Context, out InputChunks, text *InputText, bitmaps *Bitmap, nBitmaps uint64) int32 {
+		fmt.Println("input", text.Text, text.AddSpecial, text.ParseSpecial)
+		var result ffi.Arg
+		tokenizeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&ctx), unsafe.Pointer(&out), unsafe.Pointer(&text), unsafe.Pointer(&bitmaps), unsafe.Pointer(&nBitmaps))
+
+		return int32(result)
 	}
 
 	initBitmapFuncs(currentLib)

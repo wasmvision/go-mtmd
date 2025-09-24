@@ -117,6 +117,14 @@ const (
 	ATTENTION_TYPE_NON_CAUSAL AttentionType = 1
 )
 
+type FlashAttentionType int32
+
+const (
+	LLAMA_FLASH_ATTN_TYPE_AUTO     FlashAttentionType = -1
+	LLAMA_FLASH_ATTN_TYPE_DISABLED FlashAttentionType = 0
+	LLAMA_FLASH_ATTN_TYPE_ENABLED  FlashAttentionType = 1
+)
+
 type SplitMode int32
 
 const (
@@ -224,35 +232,36 @@ type ModelParams struct {
 
 // Context parameters
 type ContextParams struct {
-	Seed              uint32          // RNG seed, -1 for random
-	NCtx              uint32          // text context, 0 = from model
-	NBatch            uint32          // logical maximum batch size
-	NUbatch           uint32          // physical maximum batch size
-	NSeqMax           uint32          // max number of sequences
-	NThreads          int32           // number of threads to use for generation
-	NThreadsBatch     int32           // number of threads to use for batch processing
-	RopeScalingType   RopeScalingType // RoPE scaling type
-	PoolingType       PoolingType     // pooling type for embeddings
-	AttentionType     AttentionType   // attention type
-	RopeFreqBase      float32         // RoPE base frequency
-	RopeFreqScale     float32         // RoPE frequency scaling factor
-	YarnExtFactor     float32         // YaRN extrapolation mix factor
-	YarnAttnFactor    float32         // YaRN magnitude scaling factor
-	YarnBetaFast      float32         // YaRN low correction dim
-	YarnBetaSlow      float32         // YaRN high correction dim
-	YarnOrigCtx       uint32          // YaRN original context size
-	DefragThold       float32         // defragment the KV cache if holes/size > thold
-	CbEval            uintptr         // evaluation callback
-	CbEvalUserData    uintptr         // user data for evaluation callback
-	TypeK             int32           // data type for K cache
-	TypeV             int32           // data type for V cache
-	AbortCallback     uintptr         // abort callback
-	AbortCallbackData uintptr         // user data for abort callback
-	Logits            uint8           // whether to compute and return logits (bool as uint8)
-	Embeddings        uint8           // whether to compute and return embeddings (bool as uint8)
-	Offload_kqv       uint8           // whether to offload K, Q, V to GPU (bool as uint8)
-	FlashAttn         uint8           // whether to use flash attention (bool as uint8)
-	NoPerf            uint8           // whether to measure performance (bool as uint8)
+	NCtx               uint32             // text context, 0 = from model
+	NBatch             uint32             // logical maximum batch size
+	NUbatch            uint32             // physical maximum batch size
+	NSeqMax            uint32             // max number of sequences
+	NThreads           int32              // number of threads to use for generation
+	NThreadsBatch      int32              // number of threads to use for batch processing
+	RopeScalingType    RopeScalingType    // RoPE scaling type
+	PoolingType        PoolingType        // pooling type for embeddings
+	AttentionType      AttentionType      // attention type
+	FlashAttentionType FlashAttentionType // when to enable Flash Attention
+	RopeFreqBase       float32            // RoPE base frequency
+	RopeFreqScale      float32            // RoPE frequency scaling factor
+	YarnExtFactor      float32            // YaRN extrapolation mix factor
+	YarnAttnFactor     float32            // YaRN magnitude scaling factor
+	YarnBetaFast       float32            // YaRN low correction dim
+	YarnBetaSlow       float32            // YaRN high correction dim
+	YarnOrigCtx        uint32             // YaRN original context size
+	DefragThold        float32            // defragment the KV cache if holes/size > thold
+	CbEval             uintptr            // evaluation callback
+	CbEvalUserData     uintptr            // user data for evaluation callback
+	TypeK              int32              // data type for K cache
+	TypeV              int32              // data type for V cache
+	AbortCallback      uintptr            // abort callback
+	AbortCallbackData  uintptr            // user data for abort callback
+	Embeddings         uint8              // whether to compute and return embeddings (bool as uint8)
+	Offload_kqv        uint8              // whether to offload K, Q, V to GPU (bool as uint8)
+	NoPerf             uint8              // whether to measure performance (bool as uint8)
+	OpOffload          uint8              // offload host tensor operations to device
+	SwaFull            uint8              // use full-size SWA cache (https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055)
+	KVUnified          uint8              // use a unified buffer across the input sequences when computing the attentions
 }
 
 // Model quantize parameters
