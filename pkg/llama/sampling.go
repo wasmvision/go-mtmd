@@ -101,7 +101,7 @@ func initSampling(lib ffi.Lib) {
 		return Token(result)
 	}
 
-	samplerAcceptFunc, err = lib.Prep("llama_sampler_accept", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypeSint32)
+	samplerAcceptFunc, err = lib.Prep("llama_sampler_accept", &ffi.TypeVoid, &ffi.TypePointer, &ffi.TypeSint32)
 	if err != nil {
 		panic(err)
 	}

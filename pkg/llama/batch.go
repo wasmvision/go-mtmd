@@ -1,0 +1,67 @@
+package llama
+
+import (
+	"unsafe"
+
+	"github.com/jupiterrider/ffi"
+)
+
+var (
+	FFITypeBatch = ffi.NewType(&ffi.TypeSint32,
+		&ffi.TypePointer, &ffi.TypePointer,
+		&ffi.TypePointer, &ffi.TypePointer,
+		&ffi.TypePointer, &ffi.TypePointer)
+)
+
+var (
+	// LLAMA_API struct llama_batch llama_batch_init(
+	//         int32_t n_tokens,
+	BatchInit     func(nTokens int32, embd int32, nSeqMax int32) Batch
+	batchInitFunc ffi.Fun
+
+	// LLAMA_API void llama_batch_free(struct llama_batch batch);
+	BatchFree     func(batch Batch)
+	batchFreeFunc ffi.Fun
+
+	// LLAMA_API struct llama_batch llama_batch_get_one(
+	//               llama_token * tokens,
+	//                   int32_t   n_tokens);
+	BatchGetOne     func(tokens *Token, nTokens int32) Batch
+	batchGetOneFunc ffi.Fun
+)
+
+func initBatch(lib ffi.Lib) {
+	var err error
+	batchInitFunc, err = lib.Prep("llama_batch_init", &ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32)
+	if err != nil {
+		panic(err)
+	}
+
+	BatchInit = func(nTokens int32, embd int32, nSeqMax int32) Batch {
+		var batch Batch
+		batchInitFunc.Call(unsafe.Pointer(&batch), nTokens, embd, nSeqMax)
+
+		return batch
+	}
+
+	batchFreeFunc, err = lib.Prep("llama_batch_free", &ffi.TypeVoid, &ffi.TypePointer)
+	if err != nil {
+		panic(err)
+	}
+
+	BatchFree = func(batch Batch) {
+		batchFreeFunc.Call(nil, unsafe.Pointer(&batch))
+	}
+
+	batchGetOneFunc, err = lib.Prep("llama_batch_get_one", &FFITypeBatch, &ffi.TypePointer, &ffi.TypeSint32)
+	if err != nil {
+		panic(err)
+	}
+
+	BatchGetOne = func(tokens *Token, nTokens int32) Batch {
+		var batch Batch
+		batchGetOneFunc.Call(unsafe.Pointer(&batch), unsafe.Pointer(&tokens), unsafe.Pointer(&nTokens))
+
+		return batch
+	}
+}

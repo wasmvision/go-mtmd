@@ -52,8 +52,8 @@ type ContextParamsType struct {
 }
 
 var (
-	TypeContextParams = ffi.NewType(&ffi.TypeUint8, &ffi.TypeUint8, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer)
-	TypeInputText     = ffi.NewType(&ffi.TypePointer, &ffi.TypeUint8, &ffi.TypeUint8)
+	FFITypeContextParams = ffi.NewType(&ffi.TypeUint8, &ffi.TypeUint8, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer)
+	TypeInputText        = ffi.NewType(&ffi.TypePointer, &ffi.TypeUint8, &ffi.TypeUint8)
 )
 
 var (
@@ -117,7 +117,7 @@ func initFuncs(currentLib ffi.Lib) {
 		return unix.BytePtrToString(marker)
 	}
 
-	contextParamsDefaultFunc, err = currentLib.Prep("mtmd_context_params_default", &TypeContextParams)
+	contextParamsDefaultFunc, err = currentLib.Prep("mtmd_context_params_default", &FFITypeContextParams)
 	if err != nil {
 		panic(err)
 	}
@@ -128,7 +128,7 @@ func initFuncs(currentLib ffi.Lib) {
 		return ctx
 	}
 
-	initFromFileFunc, err = currentLib.Prep("mtmd_init_from_file", &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &TypeContextParams)
+	initFromFileFunc, err = currentLib.Prep("mtmd_init_from_file", &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &FFITypeContextParams)
 	if err != nil {
 		panic(err)
 	}
