@@ -1,7 +1,6 @@
 package mtmd
 
 import (
-	"fmt"
 	"unsafe"
 
 	"github.com/jupiterrider/ffi"
@@ -91,6 +90,17 @@ var (
 	//                            size_t n_bitmaps);
 	Tokenize     func(ctx Context, out InputChunks, text *InputText, bitmaps *Bitmap, nBitmaps uint64) int32
 	tokenizeFunc ffi.Fun
+
+	// MTMD_API int32_t mtmd_helper_eval_chunks(mtmd_context * ctx,
+	//                                          struct llama_context * lctx,
+	//                                          const mtmd_input_chunks * chunks,
+	//                                          llama_pos n_past,
+	//                                          llama_seq_id seq_id,
+	//                                          int32_t n_batch,
+	//                                          bool logits_last,
+	//                                          llama_pos * new_n_past);
+	HelperEvalChunks     func(ctx Context, lctx llama.Context, chunks InputChunks, nPast llama.Pos, seqID llama.SeqId, nBatch int32, logitsLast bool, newNPast *llama.Pos) int32
+	helperEvalChunksFunc ffi.Fun
 )
 
 func Init(currentLib ffi.Lib) {
@@ -169,9 +179,22 @@ func Init(currentLib ffi.Lib) {
 	}
 
 	Tokenize = func(ctx Context, out InputChunks, text *InputText, bitmaps *Bitmap, nBitmaps uint64) int32 {
-		fmt.Println("input", text.Text, text.AddSpecial, text.ParseSpecial)
 		var result ffi.Arg
 		tokenizeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&ctx), unsafe.Pointer(&out), unsafe.Pointer(&text), unsafe.Pointer(&bitmaps), unsafe.Pointer(&nBitmaps))
+
+		return int32(result)
+	}
+
+	helperEvalChunksFunc, err = currentLib.Prep("mtmd_helper_eval_chunks", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer,
+		&ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeUint8, &ffi.TypePointer)
+	if err != nil {
+		panic(err)
+	}
+
+	HelperEvalChunks = func(ctx Context, lctx llama.Context, chunks InputChunks, nPast llama.Pos, seqID llama.SeqId, nBatch int32, logitsLast bool, newNPast *llama.Pos) int32 {
+		var result ffi.Arg
+		helperEvalChunksFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&ctx), unsafe.Pointer(&lctx), unsafe.Pointer(&chunks), unsafe.Pointer(&nPast), unsafe.Pointer(&seqID),
+			unsafe.Pointer(&nBatch), unsafe.Pointer(&logitsLast), unsafe.Pointer(&newNPast))
 
 		return int32(result)
 	}

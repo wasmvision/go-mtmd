@@ -110,11 +110,24 @@ func main() {
 	}
 	output := mtmd.InputChunksInit()
 
-	fmt.Println("tokenize")
 	bitmaps := []mtmd.Bitmap{bitmap}
 	bt := unsafe.SliceData(bitmaps)
 
+	fmt.Println("tokenize")
 	mtmd.Tokenize(mtmdCtx, output, input, bt, 1)
+
+	var n llama.Pos
+
+	mtmd.HelperEvalChunks(mtmdCtx,
+		lctx,                    // lctx
+		output,                  // chunks
+		0,                       // n_past
+		0,                       // seq_id
+		int32(ctxParams.NBatch), // n_batch
+		true,                    // logits_last
+		&n)
+
+	fmt.Println("new pos", n)
 }
 
 func warmup(lctx llama.Context, model llama.Model, vocab llama.Vocab) {
