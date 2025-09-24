@@ -23,15 +23,6 @@ var (
 		&ffi.TypePointer, &ffi.TypePointer,
 		&ffi.TypeUint8, &ffi.TypeUint8, &ffi.TypeUint8, &ffi.TypeUint8, &ffi.TypeUint8, &ffi.TypeUint8)
 
-	// type Batch struct {
-	// 	NTokens int32    // number of tokens
-	// 	Token   *Token   // tokens
-	// 	Embd    *float32 // embeddings (if using embeddings instead of tokens)
-	// 	Pos     *Pos     // positions
-	// 	NSeqId  *int32   // number of sequence IDs per token
-	// 	SeqId   **SeqId  // sequence IDs
-	// 	Logits  *int8    // whether to compute logits for each token
-	// }
 	TypeBatch = ffi.NewType(&ffi.TypeSint32,
 		&ffi.TypePointer, &ffi.TypePointer,
 		&ffi.TypePointer, &ffi.TypePointer,
@@ -155,7 +146,7 @@ var (
 	perfContextResetFunc ffi.Fun
 )
 
-func Init(currentLib ffi.Lib) {
+func initFuncs(currentLib ffi.Lib) {
 	var err error
 	backendInitFunc, err = currentLib.Prep("llama_backend_init", &ffi.TypeVoid)
 	if err != nil {

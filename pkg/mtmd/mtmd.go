@@ -103,7 +103,7 @@ var (
 	helperEvalChunksFunc ffi.Fun
 )
 
-func Init(currentLib ffi.Lib) {
+func initFuncs(currentLib ffi.Lib) {
 	var err error
 
 	defaultMarkerFunc, err = currentLib.Prep("mtmd_default_marker", &ffi.TypePointer)
@@ -198,6 +198,4 @@ func Init(currentLib ffi.Lib) {
 
 		return int32(result)
 	}
-
-	initBitmapFuncs(currentLib)
 }

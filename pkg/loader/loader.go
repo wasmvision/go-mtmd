@@ -7,8 +7,6 @@ import (
 	"github.com/jupiterrider/ffi"
 )
 
-var currentLib ffi.Lib
-
 func LoadLibrary(path string) ffi.Lib {
 	var filename string
 	switch runtime.GOOS {
@@ -25,6 +23,5 @@ func LoadLibrary(path string) ffi.Lib {
 	if err != nil {
 		panic(err)
 	}
-	currentLib = lib
 	return lib
 }

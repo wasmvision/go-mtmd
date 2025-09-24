@@ -185,7 +185,6 @@ const (
 type Model uintptr
 type Context uintptr
 type Vocab uintptr
-type Sampler uintptr
 type AdapterLora uintptr
 
 // Structs
