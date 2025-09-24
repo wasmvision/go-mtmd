@@ -22,6 +22,16 @@ var (
 	// LLAMA_API bool llama_vocab_is_eog(const struct llama_vocab * vocab, llama_token token);
 	VocabIsEOG     func(vocab Vocab, token Token) bool
 	vocabIsEOGFunc ffi.Fun
+
+	// LLAMA_API int32_t llama_token_to_piece(
+	// 		const struct llama_vocab * vocab,
+	// 					llama_token   token,
+	// 							char * buf,
+	// 						int32_t   length,
+	// 						int32_t   lstrip,
+	// 							bool   special);
+	TokenToPiece     func(vocab Vocab, token Token, buf *byte, len int32, lstrip int32, special bool) int32
+	tokenToPieceFunc ffi.Fun
 )
 
 func initVocab(lib ffi.Lib) {
@@ -72,5 +82,20 @@ func initVocab(lib ffi.Lib) {
 		vocabIsEOGFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&vocab), unsafe.Pointer(&token))
 
 		return result.Bool()
+	}
+
+	tokenToPieceFunc, err = lib.Prep("llama_token_to_piece", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypeSint32,
+		&ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeUint8)
+	if err != nil {
+		panic(err)
+	}
+
+	TokenToPiece = func(vocab Vocab, token Token, buf *byte, len int32, lstrip int32, special bool) int32 {
+		var result ffi.Arg
+		tokenToPieceFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&vocab), unsafe.Pointer(&token), unsafe.Pointer(&buf),
+			&len, &lstrip, &special)
+
+		return int32(result)
+
 	}
 }
