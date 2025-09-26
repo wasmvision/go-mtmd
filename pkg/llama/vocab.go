@@ -36,6 +36,17 @@ var (
 	// 							bool   special);
 	TokenToPiece     func(vocab Vocab, token Token, buf *byte, len int32, lstrip int32, special bool) int32
 	tokenToPieceFunc ffi.Fun
+
+	// LLAMA_API int32_t llama_tokenize(
+	//     const struct llama_vocab * vocab,
+	//                   const char * text,
+	//                      int32_t   text_len,
+	//                  llama_token * tokens,
+	//                      int32_t   n_tokens_max,
+	//                         bool   add_special,
+	//                         bool   parse_special);
+	Tokenize     func(vocab Vocab, text *byte, textLen int32, tokens *Token, nTokensMax int32, addSpecial bool, parseSpecial bool) int32
+	tokenizeFunc ffi.Fun
 )
 
 func initVocab(lib ffi.Lib) {
@@ -110,6 +121,19 @@ func initVocab(lib ffi.Lib) {
 		var result ffi.Arg
 		tokenToPieceFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&vocab), unsafe.Pointer(&token), unsafe.Pointer(&buf),
 			&len, &lstrip, &special)
+
+		return int32(result)
+	}
+
+	tokenizeFunc, err = lib.Prep("llama_tokenize", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypeSint32,
+		&ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeUint8, &ffi.TypeUint8)
+	if err != nil {
+		panic(err)
+	}
+	Tokenize = func(vocab Vocab, text *byte, textLen int32, tokens *Token, nTokensMax int32, addSpecial bool, parseSpecial bool) int32 {
+		var result ffi.Arg
+		tokenizeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&vocab), unsafe.Pointer(&text), &textLen,
+			unsafe.Pointer(&tokens), &nTokensMax, &addSpecial, &parseSpecial)
 
 		return int32(result)
 	}

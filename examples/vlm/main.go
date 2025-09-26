@@ -32,7 +32,7 @@ func main() {
 	llama.Init(lib)
 	mtmd.Init(lib)
 
-	llama.GGMLBackendLoadAll()
+	llama.BackendInit()
 	defer llama.BackendFree()
 
 	params := llama.ModelDefaultParams()
