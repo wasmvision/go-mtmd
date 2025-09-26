@@ -3,7 +3,7 @@ package utils
 import (
 	"unsafe"
 
-	"github.com/wasmvision/go-mtmd/pkg/llama"
+	"github.com/wasmvision/yzma/pkg/llama"
 )
 
 func Warmup(lctx llama.Context, model llama.Model, vocab llama.Vocab) {

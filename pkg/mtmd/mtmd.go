@@ -4,7 +4,7 @@ import (
 	"unsafe"
 
 	"github.com/jupiterrider/ffi"
-	"github.com/wasmvision/go-mtmd/pkg/llama"
+	"github.com/wasmvision/yzma/pkg/llama"
 	"golang.org/x/sys/unix"
 )
 

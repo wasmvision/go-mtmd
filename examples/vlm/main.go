@@ -5,16 +5,16 @@ import (
 	"math"
 	"unsafe"
 
-	"github.com/wasmvision/go-mtmd/pkg/llama"
-	"github.com/wasmvision/go-mtmd/pkg/loader"
-	"github.com/wasmvision/go-mtmd/pkg/mtmd"
+	"github.com/wasmvision/yzma/pkg/llama"
+	"github.com/wasmvision/yzma/pkg/loader"
+	"github.com/wasmvision/yzma/pkg/mtmd"
 	"golang.org/x/sys/unix"
 )
 
 var (
-	modelFile = "/home/ron/Development/go-mtmd/models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf"
-	projFile  = "/home/ron/Development/go-mtmd/models/mmproj-Qwen2.5-VL-3B-Instruct-Q8_0.gguf"
-	imageFile = "/home/ron/Development/go-mtmd/images/roneye_400x400.jpg"
+	modelFile = "/home/ron/Development/yzma/models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf"
+	projFile  = "/home/ron/Development/yzma/models/mmproj-Qwen2.5-VL-3B-Instruct-Q8_0.gguf"
+	imageFile = "/home/ron/Development/yzma/images/roneye_400x400.jpg"
 
 	prompt = "what is this?"
 )

@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 
-	"github.com/wasmvision/go-mtmd/pkg/llama"
-	"github.com/wasmvision/go-mtmd/pkg/loader"
+	"github.com/wasmvision/yzma/pkg/llama"
+	"github.com/wasmvision/yzma/pkg/loader"
 )
 
 var (
-	modelFile = "/home/ron/Development/go-mtmd/models/tinyllama-1.1b-chat-v1.0.Q2_K.gguf"
+	modelFile = "/home/ron/Development/yzma/models/tinyllama-1.1b-chat-v1.0.Q2_K.gguf"
 )
 
 func main() {

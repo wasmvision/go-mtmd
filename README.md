@@ -1,12 +1,12 @@
-# go-mtmd
+# yzma
 
-Go package that lets you call llama.cpp `mtmd` to perform multimodal inference using Vision Language Models (VLMs).
+Go package that lets you call llama.cpp to perform multimodal inference using Vision Language Models (VLMs).
 
-Uses `purego` and `ffi` packages so no CGo is required.
+Uses `purego` and `ffi` packages so CGo is not required.
+
+Still a work in progress, but is minimally functioning.
 
 Borrows definitions from the https://github.com/dianlight/gollama.cpp package then modifies them rather heavily. Thank you!
-
-Still a work in progress.
 
 ```shell
 $ go run ../examples/vlm/                                                                              
@@ -18,23 +18,23 @@ register_backend: registered backend CUDA (1 devices)
 register_device: registered device CUDA0 (NVIDIA GeForce RTX 4070 Laptop GPU)
 register_backend: registered backend CPU (1 devices)
 register_device: registered device CPU (13th Gen Intel(R) Core(TM) i9-13900HX)
-load_backend: failed to find ggml_backend_init in /home/ron/Development/go-mtmd/lib/libggml-cuda.so
-load_backend: loaded RPC backend from /home/ron/Development/go-mtmd/lib/libggml-rpc.so
+load_backend: failed to find ggml_backend_init in /home/ron/Development/yzma/lib/libggml-cuda.so
+load_backend: loaded RPC backend from /home/ron/Development/yzma/lib/libggml-rpc.so
 register_backend: registered backend RPC (0 devices)
-ggml_backend_load_best: /home/ron/Development/go-mtmd/lib/libggml-cpu-sse42.so score: 5
-ggml_backend_load_best: /home/ron/Development/go-mtmd/lib/libggml-cpu-haswell.so score: 64
-ggml_backend_load_best: /home/ron/Development/go-mtmd/lib/libggml-cpu-sapphirerapids.so score: 0
-ggml_backend_load_best: /home/ron/Development/go-mtmd/lib/libggml-cpu-alderlake.so score: 128
-ggml_backend_load_best: /home/ron/Development/go-mtmd/lib/libggml-cpu-sandybridge.so score: 21
-ggml_backend_load_best: /home/ron/Development/go-mtmd/lib/libggml-cpu-x64.so score: 1
-ggml_backend_load_best: /home/ron/Development/go-mtmd/lib/libggml-cpu-skylakex.so score: 0
-ggml_backend_load_best: /home/ron/Development/go-mtmd/lib/libggml-cpu-icelake.so score: 0
-load_backend: loaded CPU backend from /home/ron/Development/go-mtmd/lib/libggml-cpu-alderlake.so
+ggml_backend_load_best: /home/ron/Development/yzma/lib/libggml-cpu-sse42.so score: 5
+ggml_backend_load_best: /home/ron/Development/yzma/lib/libggml-cpu-haswell.so score: 64
+ggml_backend_load_best: /home/ron/Development/yzma/lib/libggml-cpu-sapphirerapids.so score: 0
+ggml_backend_load_best: /home/ron/Development/yzma/lib/libggml-cpu-alderlake.so score: 128
+ggml_backend_load_best: /home/ron/Development/yzma/lib/libggml-cpu-sandybridge.so score: 21
+ggml_backend_load_best: /home/ron/Development/yzma/lib/libggml-cpu-x64.so score: 1
+ggml_backend_load_best: /home/ron/Development/yzma/lib/libggml-cpu-skylakex.so score: 0
+ggml_backend_load_best: /home/ron/Development/yzma/lib/libggml-cpu-icelake.so score: 0
+load_backend: loaded CPU backend from /home/ron/Development/yzma/lib/libggml-cpu-alderlake.so
 register_backend: registered backend CPU (1 devices)
 register_device: registered device CPU (13th Gen Intel(R) Core(TM) i9-13900HX)
-Loading model /home/ron/Development/go-mtmd/models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf
+Loading model /home/ron/Development/yzma/models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf
 llama_model_load_from_file_impl: using device CUDA0 (NVIDIA GeForce RTX 4070 Laptop GPU) (0000:01:00.0) - 7657 MiB free
-llama_model_loader: loaded meta data with 27 key-value pairs and 434 tensors from /home/ron/Development/go-mtmd/models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf (version GGUF V3 (latest))
+llama_model_loader: loaded meta data with 27 key-value pairs and 434 tensors from /home/ron/Development/yzma/models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf (version GGUF V3 (latest))
 ...
 --- vision hparams ---
 load_hparams: image_size:         1024

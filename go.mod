@@ -1,4 +1,4 @@
-module github.com/wasmvision/go-mtmd
+module github.com/wasmvision/yzma
 
 go 1.25.0
 
