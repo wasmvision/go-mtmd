@@ -50,15 +50,19 @@ var (
 	// LLAMA_API llama_token llama_model_decoder_start_token(const struct llama_model * model);
 	ModelDecoderStartToken     func(model Model) Token
 	modelDecoderStartTokenFunc ffi.Fun
+
+	// LLAMA_API int32_t llama_model_n_ctx_train(const struct llama_model * model);
+	ModelNCtxTrain     func(model Model) int32
+	modelNCtxTrainFunc ffi.Fun
 )
 
 func initModel(lib ffi.Lib) {
 	var err error
+
 	modelDefaultParamsFunc, err = lib.Prep("llama_model_default_params", &FFITypeModelParams)
 	if err != nil {
 		panic(err)
 	}
-
 	ModelDefaultParams = func() ModelParams {
 		var p ModelParams
 		modelDefaultParamsFunc.Call(unsafe.Pointer(&p))
@@ -69,7 +73,6 @@ func initModel(lib ffi.Lib) {
 	if err != nil {
 		panic(err)
 	}
-
 	ModelLoadFromFile = func(pathModel string, params ModelParams) Model {
 		var model Model
 		file := &[]byte(pathModel + "\x00")[0]
@@ -81,7 +84,6 @@ func initModel(lib ffi.Lib) {
 	if err != nil {
 		panic(err)
 	}
-
 	ModelFree = func(model Model) {
 		modelFreeFunc.Call(nil, unsafe.Pointer(&model))
 	}
@@ -90,7 +92,6 @@ func initModel(lib ffi.Lib) {
 	if err != nil {
 		panic(err)
 	}
-
 	InitFromModel = func(model Model, params ContextParams) Context {
 		var ctx Context
 		initFromModelFunc.Call(unsafe.Pointer(&ctx), unsafe.Pointer(&model), unsafe.Pointer(&params))
@@ -102,7 +103,6 @@ func initModel(lib ffi.Lib) {
 	if err != nil {
 		panic(err)
 	}
-
 	ModelChatTemplate = func(model Model, name string) string {
 		var template *byte
 		n := &[]byte(name + "\x00")[0]
@@ -115,7 +115,6 @@ func initModel(lib ffi.Lib) {
 	if err != nil {
 		panic(err)
 	}
-
 	ModelHasEncoder = func(model Model) bool {
 		var result ffi.Arg
 		modelHasEncoderFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&model))
@@ -127,7 +126,6 @@ func initModel(lib ffi.Lib) {
 	if err != nil {
 		panic(err)
 	}
-
 	ModelHasDecoder = func(model Model) bool {
 		var result ffi.Arg
 		modelHasDecoderFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&model))
@@ -139,7 +137,6 @@ func initModel(lib ffi.Lib) {
 	if err != nil {
 		panic(err)
 	}
-
 	ModelDecoderStartToken = func(model Model) Token {
 		var result ffi.Arg
 		modelDecoderStartTokenFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&model))
@@ -147,4 +144,14 @@ func initModel(lib ffi.Lib) {
 		return Token(result)
 	}
 
+	modelNCtxTrainFunc, err = lib.Prep("llama_model_n_ctx_train", &ffi.TypeSint32, &ffi.TypePointer)
+	if err != nil {
+		panic(err)
+	}
+	ModelNCtxTrain = func(model Model) int32 {
+		var result ffi.Arg
+		modelNCtxTrainFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&model))
+
+		return int32(result)
+	}
 }

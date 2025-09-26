@@ -20,9 +20,7 @@ var (
 )
 
 func chatTemplate(prompt string) string {
-	return fmt.Sprintf(`<|im_start|>user                                                                                                                                                                             
-%s<__media__><|im_end|>
-<|im_start|>assistant`, prompt)
+	return fmt.Sprintf("<|im_start|>user\n%s<__media__><|im_end|>\n<|im_start|>assistant\n", prompt)
 }
 
 func main() {
@@ -35,22 +33,14 @@ func main() {
 
 	fmt.Println("loading all GGML backends")
 	llama.GGMLBackendLoadAll()
-	defer func() {
-		fmt.Println("backend free")
-		llama.BackendFree()
-	}()
+	defer llama.BackendFree()
 
 	params := llama.ModelDefaultParams()
 	fmt.Printf("Model params: %+v\n", params)
 
 	fmt.Println("Loading model", modelFile)
 	model := llama.ModelLoadFromFile(modelFile, params)
-	defer func() {
-		llama.ModelFree(model)
-		fmt.Println("model free")
-	}()
-
-	vocab := llama.ModelGetVocab(model)
+	defer llama.ModelFree(model)
 
 	ctxParams := llama.ContextDefaultParams()
 	fmt.Printf("Context params: %+v\n", ctxParams)
@@ -60,12 +50,10 @@ func main() {
 
 	fmt.Println("Init model")
 	lctx := llama.InitFromModel(model, ctxParams)
-	defer func() {
-		llama.Free(lctx)
-		fmt.Println("llama context free")
-	}()
+	defer llama.Free(lctx)
 
-	sampler := setupSampler(vocab)
+	vocab := llama.ModelGetVocab(model)
+	sampler := setupSampler(model, vocab)
 
 	// fmt.Println("warming up")
 	// utils.Warmup(lctx, model, vocab)
@@ -74,57 +62,41 @@ func main() {
 	fmt.Printf("mtmd Context Params: %+v\n", mctxParams)
 
 	// mctxParams.UseGPU = true
-	mctxParams.Verbosity = llama.LogLevelError
+	// mctxParams.Verbosity = llama.LogLevel(1)
 
 	fmt.Println("Loading projector", projFile)
 	mtmdCtx := mtmd.InitFromFile(projFile, model, mctxParams)
-	defer func() {
-		mtmd.Free(mtmdCtx)
-		fmt.Println("mtmd context free")
-	}()
-
-	fmt.Println("Loading bitmap", imageFile)
-	bitmap := mtmd.BitmapInitFromFile(mtmdCtx, imageFile)
-	defer func() {
-		mtmd.BitmapFree(bitmap)
-		fmt.Println("bitmap free")
-	}()
-
-	fmt.Println("bitmap size", mtmd.BitmapGetNBytes(bitmap))
+	defer mtmd.Free(mtmdCtx)
 
 	fmt.Println("loading template")
 	pmpt := chatTemplate(prompt)
+	p, _ := unix.BytePtrFromString(pmpt)
 	input := &mtmd.InputText{
-		Text:         &[]byte(pmpt + "\x00")[0],
+		Text:         p,
 		AddSpecial:   true,
 		ParseSpecial: true,
 	}
 
 	output := mtmd.InputChunksInit()
 
+	bitmap := mtmd.BitmapInitFromFile(mtmdCtx, imageFile)
+	defer mtmd.BitmapFree(bitmap)
+
 	bitmaps := []mtmd.Bitmap{bitmap}
 	bt := unsafe.SliceData(bitmaps)
-
-	fmt.Println("tokenize")
-	stats := mtmd.Tokenize(mtmdCtx, output, input, bt, 1)
-	fmt.Println("tokenize result", stats)
-
-	fmt.Println("got chunks", mtmd.InputChunksSize(output))
+	mtmd.Tokenize(mtmdCtx, output, input, bt, 1)
 
 	var n llama.Pos
-	res := mtmd.HelperEvalChunks(mtmdCtx, lctx, output, 0, 0, int32(ctxParams.NBatch), true, &n)
-
-	fmt.Println("res", res, "new pos", n)
+	mtmd.HelperEvalChunks(mtmdCtx, lctx, output, 0, 0, int32(ctxParams.NBatch), true, &n)
 
 	batch := llama.BatchInit(1, 0, 1)
-	for {
+	for i := 0; i < 0x7fffffff; i++ {
 		token := llama.SamplerSample(sampler, lctx, -1)
 		llama.SamplerAccept(sampler, token)
 
 		if llama.VocabIsEOG(vocab, token) {
 			// end of generation
 			fmt.Println()
-			fmt.Println("Done.")
 			break
 		}
 
@@ -148,38 +120,63 @@ func main() {
 	}
 }
 
-func setupSampler(vocab llama.Vocab) llama.Sampler {
+func setupSampler(model llama.Model, vocab llama.Vocab) llama.Sampler {
 	params := llama.SamplerChainDefaultParams()
 	sampler := llama.SamplerChainInit(params)
 
-	// for (llama_token i = 0; i < llama_vocab_n_tokens(vocab); i++) {
-	//     if (llama_vocab_is_eog(vocab, i)) {
-	//         LOG_INF("%s: added %s logit bias = %f\n", __func__, common_token_to_piece(lctx, i).c_str(), -INFINITY);
-	//         params.sampling.logit_bias_eog.push_back({i, -INFINITY});
-	//     }
-	// }
-
-	// if (params.sampling.ignore_eos) {
-	//     // add EOG biases to the active set of logit biases
-	//     params.sampling.logit_bias.insert(
-	//             params.sampling.logit_bias.end(),
-	//             params.sampling.logit_bias_eog.begin(), params.sampling.logit_bias_eog.end());
-	// }
 	logitBiasEOG := make([]llama.LogitBias, 0)
 	nTokens := llama.VocabNTokens(vocab)
 
 	for i := int32(0); i < nTokens; i++ {
 		token := llama.Token(i)
 		if llama.VocabIsEOG(vocab, token) {
-			logitBiasEOG = append(logitBiasEOG, llama.LogitBias{Token: token, Bias: -1 * math.MaxFloat32})
+			logitBiasEOG = append(logitBiasEOG, llama.LogitBias{Token: token, Bias: math.SmallestNonzeroFloat32})
 		}
 	}
 
 	bias := llama.SamplerInitLogitBias(nTokens, int32(len(logitBiasEOG)), unsafe.SliceData(logitBiasEOG))
 	llama.SamplerChainAdd(sampler, bias)
 
-	// greedy := llama.SamplerInitGreedy()
-	// llama.SamplerChainAdd(sampler, greedy)
+	// defaults: penalties;dry;top_n_sigma;top_k;typ_p;top_p;min_p;xtc;temperature
+	penalties := llama.SamplerInitPenalties(64, 1.0, 0, 0)
+	llama.SamplerChainAdd(sampler, penalties)
+
+	seqBreakers := []string{"\n", ":", "\"", "*"}
+	var combined []*byte
+	for _, s := range seqBreakers {
+		ptr, err := unix.BytePtrFromString(s)
+		if err != nil {
+			panic(err)
+		}
+		combined = append(combined, ptr)
+	}
+	seqBreakersPtr := unsafe.SliceData(combined)
+
+	dry := llama.SamplerInitDry(vocab, llama.ModelNCtxTrain(model), 0, 1.75, 2, 4096, seqBreakersPtr, uint32(len(seqBreakers)))
+	llama.SamplerChainAdd(sampler, dry)
+
+	topNSigma := llama.SamplerInitTopNSigma(-1.0)
+	llama.SamplerChainAdd(sampler, topNSigma)
+
+	topK := llama.SamplerInitTopK(40)
+	llama.SamplerChainAdd(sampler, topK)
+
+	typical := llama.SamplerInitTypical(1.0, 0)
+	llama.SamplerChainAdd(sampler, typical)
+
+	topP := llama.SamplerInitTopP(0.95, 0)
+	llama.SamplerChainAdd(sampler, topP)
+
+	minP := llama.SamplerInitMinP(0.05, 0)
+	llama.SamplerChainAdd(sampler, minP)
+
+	xtc := llama.SamplerInitXTC(0, 0.1, 0, llama.DEFAULT_SEED)
+	llama.SamplerChainAdd(sampler, xtc)
+
+	temp := llama.SamplerInitTempExt(0.2, 0, 1.0)
+	llama.SamplerChainAdd(sampler, temp)
+
+	// add this last
 	dist := llama.SamplerInitDist(llama.DEFAULT_SEED)
 	llama.SamplerChainAdd(sampler, dist)
 
