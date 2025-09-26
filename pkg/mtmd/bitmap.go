@@ -39,14 +39,11 @@ var (
 	bitmapInitFromFileFunc ffi.Fun
 )
 
-func loadBitmapFuncs(currentLib ffi.Lib) {
+func loadBitmapFuncs(lib ffi.Lib) {
 	var err error
-
-	bitmapInitFunc, err = currentLib.Prep("mtmd_bitmap_init", &ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypePointer)
-	if err != nil {
+	if bitmapInitFunc, err = lib.Prep("mtmd_bitmap_init", &ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	BitmapInit = func(nx uint32, ny uint32, data uintptr) Bitmap {
 		var bitmap Bitmap
 		bitmapInitFunc.Call(unsafe.Pointer(&bitmap), &nx, &ny, unsafe.Pointer(&data))
@@ -54,20 +51,16 @@ func loadBitmapFuncs(currentLib ffi.Lib) {
 		return bitmap
 	}
 
-	bitmapFreeFunc, err = currentLib.Prep("mtmd_bitmap_free", &ffi.TypeVoid, &ffi.TypePointer)
-	if err != nil {
+	if bitmapFreeFunc, err = lib.Prep("mtmd_bitmap_free", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	BitmapFree = func(bitmap Bitmap) {
 		bitmapFreeFunc.Call(nil, unsafe.Pointer(&bitmap))
 	}
 
-	bitmapGetNBytesFunc, err = currentLib.Prep("mtmd_bitmap_get_n_bytes", &ffi.TypeUint32, &ffi.TypePointer)
-	if err != nil {
+	if bitmapGetNBytesFunc, err = lib.Prep("mtmd_bitmap_get_n_bytes", &ffi.TypeUint32, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	BitmapGetNBytes = func(bitmap Bitmap) uint32 {
 		var result ffi.Arg
 		bitmapGetNBytesFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&bitmap))
@@ -75,11 +68,9 @@ func loadBitmapFuncs(currentLib ffi.Lib) {
 		return uint32(result)
 	}
 
-	bitmapInitFromFileFunc, err = currentLib.Prep("mtmd_helper_bitmap_init_from_file", &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer)
-	if err != nil {
+	if bitmapInitFromFileFunc, err = lib.Prep("mtmd_helper_bitmap_init_from_file", &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	BitmapInitFromFile = func(ctx Context, fname string) Bitmap {
 		var bitmap Bitmap
 		file := &[]byte(fname + "\x00")[0]

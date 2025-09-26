@@ -6,16 +6,6 @@ import (
 	"github.com/jupiterrider/ffi"
 )
 
-// type Batch struct {
-// 	NTokens int32    // number of tokens
-// 	Token   *Token   // tokens
-// 	Embd    *float32 // embeddings (if using embeddings instead of tokens)
-// 	Pos     *Pos     // positions
-// 	NSeqId  *int32   // number of sequence IDs per token
-// 	SeqId   **SeqId  // sequence IDs
-// 	Logits  *int8    // whether to compute logits for each token
-// }
-
 var (
 	FFITypeBatch = ffi.NewType(&ffi.TypeSint32,
 		&ffi.TypePointer, &ffi.TypePointer,
@@ -42,11 +32,10 @@ var (
 
 func loadBatchFuncs(lib ffi.Lib) {
 	var err error
-	batchInitFunc, err = lib.Prep("llama_batch_init", &FFITypeBatch, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32)
-	if err != nil {
+
+	if batchInitFunc, err = lib.Prep("llama_batch_init", &FFITypeBatch, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32); err != nil {
 		panic(err)
 	}
-
 	BatchInit = func(nTokens int32, embd int32, nSeqMax int32) Batch {
 		var batch Batch
 		batchInitFunc.Call(unsafe.Pointer(&batch), unsafe.Pointer(&nTokens), unsafe.Pointer(&embd), unsafe.Pointer(&nSeqMax))
@@ -54,20 +43,16 @@ func loadBatchFuncs(lib ffi.Lib) {
 		return batch
 	}
 
-	batchFreeFunc, err = lib.Prep("llama_batch_free", &ffi.TypeVoid, &ffi.TypePointer)
-	if err != nil {
+	if batchFreeFunc, err = lib.Prep("llama_batch_free", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	BatchFree = func(batch Batch) {
 		batchFreeFunc.Call(nil, unsafe.Pointer(&batch))
 	}
 
-	batchGetOneFunc, err = lib.Prep("llama_batch_get_one", &FFITypeBatch, &ffi.TypePointer, &ffi.TypeSint32)
-	if err != nil {
+	if batchGetOneFunc, err = lib.Prep("llama_batch_get_one", &FFITypeBatch, &ffi.TypePointer, &ffi.TypeSint32); err != nil {
 		panic(err)
 	}
-
 	BatchGetOne = func(tokens *Token, nTokens int32) Batch {
 		var batch Batch
 		batchGetOneFunc.Call(unsafe.Pointer(&batch), unsafe.Pointer(&tokens), unsafe.Pointer(&nTokens))

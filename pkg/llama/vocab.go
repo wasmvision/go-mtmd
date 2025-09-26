@@ -51,11 +51,9 @@ var (
 
 func loadVocabFuncs(lib ffi.Lib) {
 	var err error
-	modelGetVocabFunc, err = lib.Prep("llama_model_get_vocab", &ffi.TypePointer, &ffi.TypePointer)
-	if err != nil {
+	if modelGetVocabFunc, err = lib.Prep("llama_model_get_vocab", &ffi.TypePointer, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	ModelGetVocab = func(model Model) Vocab {
 		var vocab Vocab
 		modelGetVocabFunc.Call(unsafe.Pointer(&vocab), unsafe.Pointer(&model))
@@ -63,11 +61,9 @@ func loadVocabFuncs(lib ffi.Lib) {
 		return vocab
 	}
 
-	vocabBOSFunc, err = lib.Prep("llama_vocab_bos", &ffi.TypeSint32, &ffi.TypePointer)
-	if err != nil {
+	if vocabBOSFunc, err = lib.Prep("llama_vocab_bos", &ffi.TypeSint32, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	VocabBOS = func(vocab Vocab) Token {
 		var token ffi.Arg
 		vocabBOSFunc.Call(unsafe.Pointer(&token), unsafe.Pointer(&vocab))
@@ -75,11 +71,9 @@ func loadVocabFuncs(lib ffi.Lib) {
 		return Token(token)
 	}
 
-	vocabEOSFunc, err = lib.Prep("llama_vocab_eos", &ffi.TypeSint32, &ffi.TypePointer)
-	if err != nil {
+	if vocabEOSFunc, err = lib.Prep("llama_vocab_eos", &ffi.TypeSint32, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	VocabEOS = func(vocab Vocab) Token {
 		var token ffi.Arg
 		vocabEOSFunc.Call(unsafe.Pointer(&token), unsafe.Pointer(&vocab))
@@ -87,11 +81,9 @@ func loadVocabFuncs(lib ffi.Lib) {
 		return Token(token)
 	}
 
-	vocabIsEOGFunc, err = lib.Prep("llama_vocab_is_eog", &ffi.TypeUint8, &ffi.TypePointer, &ffi.TypeSint32)
-	if err != nil {
+	if vocabIsEOGFunc, err = lib.Prep("llama_vocab_is_eog", &ffi.TypeUint8, &ffi.TypePointer, &ffi.TypeSint32); err != nil {
 		panic(err)
 	}
-
 	VocabIsEOG = func(vocab Vocab, token Token) bool {
 		var result ffi.Arg
 		vocabIsEOGFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&vocab), unsafe.Pointer(&token))
@@ -99,11 +91,9 @@ func loadVocabFuncs(lib ffi.Lib) {
 		return result.Bool()
 	}
 
-	vocabNTokensFunc, err = lib.Prep("llama_vocab_n_tokens", &ffi.TypeSint32, &ffi.TypePointer)
-	if err != nil {
+	if vocabNTokensFunc, err = lib.Prep("llama_vocab_n_tokens", &ffi.TypeSint32, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	VocabNTokens = func(vocab Vocab) int32 {
 		var result ffi.Arg
 		vocabNTokensFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&vocab))
@@ -111,12 +101,10 @@ func loadVocabFuncs(lib ffi.Lib) {
 		return int32(result)
 	}
 
-	tokenToPieceFunc, err = lib.Prep("llama_token_to_piece", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypeSint32,
-		&ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeUint8)
-	if err != nil {
+	if tokenToPieceFunc, err = lib.Prep("llama_token_to_piece", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypeSint32,
+		&ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeUint8); err != nil {
 		panic(err)
 	}
-
 	TokenToPiece = func(vocab Vocab, token Token, buf *byte, len int32, lstrip int32, special bool) int32 {
 		var result ffi.Arg
 		tokenToPieceFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&vocab), unsafe.Pointer(&token), unsafe.Pointer(&buf),
@@ -125,9 +113,8 @@ func loadVocabFuncs(lib ffi.Lib) {
 		return int32(result)
 	}
 
-	tokenizeFunc, err = lib.Prep("llama_tokenize", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypeSint32,
-		&ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeUint8, &ffi.TypeUint8)
-	if err != nil {
+	if tokenizeFunc, err = lib.Prep("llama_tokenize", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypeSint32,
+		&ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeUint8, &ffi.TypeUint8); err != nil {
 		panic(err)
 	}
 	Tokenize = func(vocab Vocab, text *byte, textLen int32, tokens *Token, nTokensMax int32, addSpecial bool, parseSpecial bool) int32 {

@@ -74,67 +74,53 @@ var (
 
 func loadFuncs(currentLib ffi.Lib) {
 	var err error
-	backendInitFunc, err = currentLib.Prep("llama_backend_init", &ffi.TypeVoid)
-	if err != nil {
+	if backendInitFunc, err = currentLib.Prep("llama_backend_init", &ffi.TypeVoid); err != nil {
 		panic(err)
 	}
-
 	BackendInit = func() {
 		backendInitFunc.Call(nil)
 	}
 
-	backendFreeFunc, err = currentLib.Prep("llama_backend_init", &ffi.TypeVoid)
-	if err != nil {
+	if backendFreeFunc, err = currentLib.Prep("llama_backend_init", &ffi.TypeVoid); err != nil {
 		panic(err)
 	}
-
 	BackendFree = func() {
 		backendFreeFunc.Call(nil)
 	}
 
-	ggmlBackendLoadAllFunc, err = currentLib.Prep("ggml_backend_load_all", &ffi.TypeVoid)
-	if err != nil {
+	if ggmlBackendLoadAllFunc, err = currentLib.Prep("ggml_backend_load_all", &ffi.TypeVoid); err != nil {
 		panic(err)
 	}
-
 	GGMLBackendLoadAll = func() {
 		ggmlBackendLoadAllFunc.Call(nil)
 	}
 
-	contextDefaultParamsFunc, err = currentLib.Prep("llama_context_default_params", &FFITypeContextParams)
-	if err != nil {
+	if contextDefaultParamsFunc, err = currentLib.Prep("llama_context_default_params", &FFITypeContextParams); err != nil {
 		panic(err)
 	}
-
 	ContextDefaultParams = func() ContextParams {
 		var p ContextParams
 		contextDefaultParamsFunc.Call(unsafe.Pointer(&p))
 		return p
 	}
 
-	freeFunc, err = currentLib.Prep("llama_free", &ffi.TypeVoid, &ffi.TypePointer)
-	if err != nil {
+	if freeFunc, err = currentLib.Prep("llama_free", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	Free = func(ctx Context) {
 		freeFunc.Call(nil, unsafe.Pointer(&ctx))
 	}
 
-	setWarmupFunc, err = currentLib.Prep("llama_set_warmup", &ffi.TypeVoid, &ffi.TypePointer, &ffi.TypeUint8)
-	if err != nil {
+	if setWarmupFunc, err = currentLib.Prep("llama_set_warmup", &ffi.TypeVoid, &ffi.TypePointer, &ffi.TypeUint8); err != nil {
 		panic(err)
 	}
-
 	SetWarmup = func(ctx Context, warmup bool) {
 		setWarmupFunc.Call(nil, unsafe.Pointer(&ctx), &warmup)
 	}
 
-	encodeFunc, err = currentLib.Prep("llama_encode", &ffi.TypeSint32, &ffi.TypePointer, &FFITypeBatch)
-	if err != nil {
+	if encodeFunc, err = currentLib.Prep("llama_encode", &ffi.TypeSint32, &ffi.TypePointer, &FFITypeBatch); err != nil {
 		panic(err)
 	}
-
 	Encode = func(ctx Context, batch Batch) int32 {
 		var result ffi.Arg
 		encodeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&ctx), unsafe.Pointer(&batch))
@@ -142,11 +128,9 @@ func loadFuncs(currentLib ffi.Lib) {
 		return int32(result)
 	}
 
-	decodeFunc, err = currentLib.Prep("llama_decode", &ffi.TypeSint32, &ffi.TypePointer, &FFITypeBatch)
-	if err != nil {
+	if decodeFunc, err = currentLib.Prep("llama_decode", &ffi.TypeSint32, &ffi.TypePointer, &FFITypeBatch); err != nil {
 		panic(err)
 	}
-
 	Decode = func(ctx Context, batch Batch) int32 {
 		var result ffi.Arg
 		decodeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&ctx), unsafe.Pointer(&batch))
@@ -154,20 +138,16 @@ func loadFuncs(currentLib ffi.Lib) {
 		return int32(result)
 	}
 
-	memoryClearFunc, err = currentLib.Prep("llama_memory_clear", &ffi.TypeVoid, &ffi.TypePointer, &ffi.TypeUint8)
-	if err != nil {
+	if memoryClearFunc, err = currentLib.Prep("llama_memory_clear", &ffi.TypeVoid, &ffi.TypePointer, &ffi.TypeUint8); err != nil {
 		panic(err)
 	}
-
 	MemoryClear = func(mem Memory, data bool) {
 		memoryClearFunc.Call(nil, unsafe.Pointer(&mem), unsafe.Pointer(&data))
 	}
 
-	getMemoryFunc, err = currentLib.Prep("llama_get_memory", &ffi.TypePointer, &ffi.TypePointer)
-	if err != nil {
+	if getMemoryFunc, err = currentLib.Prep("llama_get_memory", &ffi.TypePointer, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	GetMemory = func(ctx Context) Memory {
 		var mem Memory
 		getMemoryFunc.Call(unsafe.Pointer(&mem), unsafe.Pointer(&ctx))
@@ -175,20 +155,16 @@ func loadFuncs(currentLib ffi.Lib) {
 		return mem
 	}
 
-	synchronizeFunc, err = currentLib.Prep("llama_synchronize", &ffi.TypeVoid, &ffi.TypePointer)
-	if err != nil {
+	if synchronizeFunc, err = currentLib.Prep("llama_synchronize", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	Synchronize = func(ctx Context) {
 		synchronizeFunc.Call(nil, unsafe.Pointer(&ctx))
 	}
 
-	perfContextResetFunc, err = currentLib.Prep("llama_perf_context_reset", &ffi.TypeVoid, &ffi.TypePointer)
-	if err != nil {
+	if perfContextResetFunc, err = currentLib.Prep("llama_perf_context_reset", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	PerfContextReset = func(ctx Context) {
 		perfContextResetFunc.Call(nil, unsafe.Pointer(&ctx))
 	}

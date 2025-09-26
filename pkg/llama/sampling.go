@@ -104,11 +104,9 @@ var (
 
 func loadSamplingFuncs(lib ffi.Lib) {
 	var err error
-	samplerChainDefaultParamsFunc, err = lib.Prep("llama_sampler_chain_default_params", &TypeSamplerChainParams)
-	if err != nil {
+	if samplerChainDefaultParamsFunc, err = lib.Prep("llama_sampler_chain_default_params", &TypeSamplerChainParams); err != nil {
 		panic(err)
 	}
-
 	SamplerChainDefaultParams = func() SamplerChainParams {
 		var p SamplerChainParams
 		samplerChainDefaultParamsFunc.Call(unsafe.Pointer(&p))
@@ -116,11 +114,9 @@ func loadSamplingFuncs(lib ffi.Lib) {
 		return p
 	}
 
-	samplerChainInitFunc, err = lib.Prep("llama_sampler_chain_init", &ffi.TypePointer, &TypeSamplerChainParams)
-	if err != nil {
+	if samplerChainInitFunc, err = lib.Prep("llama_sampler_chain_init", &ffi.TypePointer, &TypeSamplerChainParams); err != nil {
 		panic(err)
 	}
-
 	SamplerChainInit = func(params SamplerChainParams) Sampler {
 		var p Sampler
 		samplerChainInitFunc.Call(unsafe.Pointer(&p), unsafe.Pointer(&params))
@@ -128,20 +124,16 @@ func loadSamplingFuncs(lib ffi.Lib) {
 		return p
 	}
 
-	samplerChainAddFunc, err = lib.Prep("llama_sampler_chain_add", &ffi.TypeVoid, &ffi.TypePointer, &ffi.TypePointer)
-	if err != nil {
+	if samplerChainAddFunc, err = lib.Prep("llama_sampler_chain_add", &ffi.TypeVoid, &ffi.TypePointer, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	SamplerChainAdd = func(chain Sampler, smpl Sampler) {
 		samplerChainAddFunc.Call(nil, unsafe.Pointer(&chain), unsafe.Pointer(&smpl))
 	}
 
-	samplerInitGreedyFunc, err = lib.Prep("llama_sampler_init_greedy", &ffi.TypePointer)
-	if err != nil {
+	if samplerInitGreedyFunc, err = lib.Prep("llama_sampler_init_greedy", &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	SamplerInitGreedy = func() Sampler {
 		var p Sampler
 		samplerInitGreedyFunc.Call(unsafe.Pointer(&p))
@@ -149,11 +141,9 @@ func loadSamplingFuncs(lib ffi.Lib) {
 		return p
 	}
 
-	samplerInitDistFunc, err = lib.Prep("llama_sampler_init_dist", &ffi.TypePointer, &ffi.TypeUint32)
-	if err != nil {
+	if samplerInitDistFunc, err = lib.Prep("llama_sampler_init_dist", &ffi.TypePointer, &ffi.TypeUint32); err != nil {
 		panic(err)
 	}
-
 	SamplerInitDist = func(seed uint32) Sampler {
 		var p Sampler
 		samplerInitDistFunc.Call(unsafe.Pointer(&p), unsafe.Pointer(&seed))
@@ -161,11 +151,9 @@ func loadSamplingFuncs(lib ffi.Lib) {
 		return p
 	}
 
-	samplerInitLogitBiasFunc, err = lib.Prep("llama_sampler_init_logit_bias", &ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypePointer)
-	if err != nil {
+	if samplerInitLogitBiasFunc, err = lib.Prep("llama_sampler_init_logit_bias", &ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	SamplerInitLogitBias = func(nVocab int32, nLogitBias int32, logitBias *LogitBias) Sampler {
 		var p Sampler
 		samplerInitLogitBiasFunc.Call(unsafe.Pointer(&p), unsafe.Pointer(&nVocab), unsafe.Pointer(&nLogitBias), unsafe.Pointer(&logitBias))
@@ -173,11 +161,9 @@ func loadSamplingFuncs(lib ffi.Lib) {
 		return p
 	}
 
-	samplerInitPenaltiesFunc, err = lib.Prep("llama_sampler_init_penalties", &ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeFloat, &ffi.TypeFloat, &ffi.TypeFloat)
-	if err != nil {
+	if samplerInitPenaltiesFunc, err = lib.Prep("llama_sampler_init_penalties", &ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeFloat, &ffi.TypeFloat, &ffi.TypeFloat); err != nil {
 		panic(err)
 	}
-
 	SamplerInitPenalties = func(lastN int32, repeat float32, freq float32, present float32) Sampler {
 		var p Sampler
 		samplerInitPenaltiesFunc.Call(unsafe.Pointer(&p), unsafe.Pointer(&lastN), unsafe.Pointer(&repeat), unsafe.Pointer(&freq), unsafe.Pointer(&present))
@@ -185,12 +171,10 @@ func loadSamplingFuncs(lib ffi.Lib) {
 		return p
 	}
 
-	samplerInitDryFunc, err = lib.Prep("llama_sampler_init_dry", &ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeFloat, &ffi.TypeFloat,
-		&ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypeUint32)
-	if err != nil {
+	if samplerInitDryFunc, err = lib.Prep("llama_sampler_init_dry", &ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeFloat, &ffi.TypeFloat,
+		&ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypeUint32); err != nil {
 		panic(err)
 	}
-
 	SamplerInitDry = func(vocab Vocab, nCtxTrain int32, multiplier float32, base float32, allowedLength int32, penaltyLast int32,
 		seqBreakers **byte, numBreakers uint32) Sampler {
 		var p Sampler
@@ -200,8 +184,7 @@ func loadSamplingFuncs(lib ffi.Lib) {
 		return p
 	}
 
-	samplerInitTopNSigmaFunc, err = lib.Prep("llama_sampler_init_top_n_sigma", &ffi.TypePointer, &ffi.TypeFloat)
-	if err != nil {
+	if samplerInitTopNSigmaFunc, err = lib.Prep("llama_sampler_init_top_n_sigma", &ffi.TypePointer, &ffi.TypeFloat); err != nil {
 		panic(err)
 	}
 	SamplerInitTopNSigma = func(n float32) Sampler {
@@ -211,8 +194,7 @@ func loadSamplingFuncs(lib ffi.Lib) {
 		return p
 	}
 
-	samplerInitTopKFunc, err = lib.Prep("llama_sampler_init_top_k", &ffi.TypePointer, &ffi.TypeSint32)
-	if err != nil {
+	if samplerInitTopKFunc, err = lib.Prep("llama_sampler_init_top_k", &ffi.TypePointer, &ffi.TypeSint32); err != nil {
 		panic(err)
 	}
 	SamplerInitTopK = func(k int32) Sampler {
@@ -222,8 +204,7 @@ func loadSamplingFuncs(lib ffi.Lib) {
 		return p
 	}
 
-	samplerInitTypicalFunc, err = lib.Prep("llama_sampler_init_typical", &ffi.TypePointer, &ffi.TypeFloat, &ffi.TypeUint32)
-	if err != nil {
+	if samplerInitTypicalFunc, err = lib.Prep("llama_sampler_init_typical", &ffi.TypePointer, &ffi.TypeFloat, &ffi.TypeUint32); err != nil {
 		panic(err)
 	}
 	SamplerInitTypical = func(p float32, keep uint32) Sampler {
@@ -233,8 +214,7 @@ func loadSamplingFuncs(lib ffi.Lib) {
 		return s
 	}
 
-	samplerInitTopPFunc, err = lib.Prep("llama_sampler_init_top_p", &ffi.TypePointer, &ffi.TypeFloat, &ffi.TypeUint32)
-	if err != nil {
+	if samplerInitTopPFunc, err = lib.Prep("llama_sampler_init_top_p", &ffi.TypePointer, &ffi.TypeFloat, &ffi.TypeUint32); err != nil {
 		panic(err)
 	}
 	SamplerInitTopP = func(p float32, keep uint32) Sampler {
@@ -244,8 +224,7 @@ func loadSamplingFuncs(lib ffi.Lib) {
 		return s
 	}
 
-	samplerInitMinPFunc, err = lib.Prep("llama_sampler_init_top_p", &ffi.TypePointer, &ffi.TypeFloat, &ffi.TypeUint32)
-	if err != nil {
+	if samplerInitMinPFunc, err = lib.Prep("llama_sampler_init_top_p", &ffi.TypePointer, &ffi.TypeFloat, &ffi.TypeUint32); err != nil {
 		panic(err)
 	}
 	SamplerInitMinP = func(p float32, keep uint32) Sampler {
@@ -255,8 +234,7 @@ func loadSamplingFuncs(lib ffi.Lib) {
 		return s
 	}
 
-	samplerInitXTCFunc, err = lib.Prep("llama_sampler_init_xtc", &ffi.TypePointer, &ffi.TypeFloat, &ffi.TypeFloat, &ffi.TypeUint32, &ffi.TypeUint32)
-	if err != nil {
+	if samplerInitXTCFunc, err = lib.Prep("llama_sampler_init_xtc", &ffi.TypePointer, &ffi.TypeFloat, &ffi.TypeFloat, &ffi.TypeUint32, &ffi.TypeUint32); err != nil {
 		panic(err)
 	}
 	SamplerInitXTC = func(p float32, t float32, minKeep uint32, seed uint32) Sampler {
@@ -266,8 +244,7 @@ func loadSamplingFuncs(lib ffi.Lib) {
 		return s
 	}
 
-	samplerInitTempExtFunc, err = lib.Prep("llama_sampler_init_temp_ext", &ffi.TypePointer, &ffi.TypeFloat, &ffi.TypeFloat, &ffi.TypeFloat)
-	if err != nil {
+	if samplerInitTempExtFunc, err = lib.Prep("llama_sampler_init_temp_ext", &ffi.TypePointer, &ffi.TypeFloat, &ffi.TypeFloat, &ffi.TypeFloat); err != nil {
 		panic(err)
 	}
 	SamplerInitTempExt = func(t float32, delta float32, exponent float32) Sampler {
@@ -277,8 +254,7 @@ func loadSamplingFuncs(lib ffi.Lib) {
 		return s
 	}
 
-	samplerSampleFunc, err = lib.Prep("llama_sampler_sample", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypeSint32)
-	if err != nil {
+	if samplerSampleFunc, err = lib.Prep("llama_sampler_sample", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypeSint32); err != nil {
 		panic(err)
 	}
 	SamplerSample = func(smpl Sampler, ctx Context, idx int32) Token {
@@ -288,16 +264,14 @@ func loadSamplingFuncs(lib ffi.Lib) {
 		return Token(result)
 	}
 
-	samplerAcceptFunc, err = lib.Prep("llama_sampler_accept", &ffi.TypeVoid, &ffi.TypePointer, &ffi.TypeSint32)
-	if err != nil {
+	if samplerAcceptFunc, err = lib.Prep("llama_sampler_accept", &ffi.TypeVoid, &ffi.TypePointer, &ffi.TypeSint32); err != nil {
 		panic(err)
 	}
 	SamplerAccept = func(smpl Sampler, token Token) {
 		samplerAcceptFunc.Call(nil, unsafe.Pointer(&smpl), unsafe.Pointer(&token))
 	}
 
-	samplerFreeFunc, err = lib.Prep("llama_sampler_free", &ffi.TypePointer)
-	if err != nil {
+	if samplerFreeFunc, err = lib.Prep("llama_sampler_free", &ffi.TypePointer); err != nil {
 		panic(err)
 	}
 	SamplerFree = func(smpl Sampler) {

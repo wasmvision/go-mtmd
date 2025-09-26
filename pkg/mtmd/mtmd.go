@@ -107,36 +107,30 @@ var (
 	helperEvalChunksFunc ffi.Fun
 )
 
-func loadFuncs(currentLib ffi.Lib) {
+func loadFuncs(lib ffi.Lib) {
 	var err error
 
-	defaultMarkerFunc, err = currentLib.Prep("mtmd_default_marker", &ffi.TypePointer)
-	if err != nil {
+	if defaultMarkerFunc, err = lib.Prep("mtmd_default_marker", &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	DefaultMarker = func() string {
 		var marker *byte
 		defaultMarkerFunc.Call(unsafe.Pointer(&marker))
 		return unix.BytePtrToString(marker)
 	}
 
-	contextParamsDefaultFunc, err = currentLib.Prep("mtmd_context_params_default", &FFITypeContextParams)
-	if err != nil {
+	if contextParamsDefaultFunc, err = lib.Prep("mtmd_context_params_default", &FFITypeContextParams); err != nil {
 		panic(err)
 	}
-
 	ContextParamsDefault = func() ContextParamsType {
 		var ctx ContextParamsType
 		contextParamsDefaultFunc.Call(unsafe.Pointer(&ctx))
 		return ctx
 	}
 
-	initFromFileFunc, err = currentLib.Prep("mtmd_init_from_file", &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &FFITypeContextParams)
-	if err != nil {
+	if initFromFileFunc, err = lib.Prep("mtmd_init_from_file", &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &FFITypeContextParams); err != nil {
 		panic(err)
 	}
-
 	InitFromFile = func(mmprojFname string, model llama.Model, ctxParams ContextParamsType) Context {
 		var ctx Context
 		file := &[]byte(mmprojFname + "\x00")[0]
@@ -144,20 +138,16 @@ func loadFuncs(currentLib ffi.Lib) {
 		return ctx
 	}
 
-	freeFunc, err = currentLib.Prep("mtmd_free", &ffi.TypeVoid, &ffi.TypePointer)
-	if err != nil {
+	if freeFunc, err = lib.Prep("mtmd_free", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	Free = func(ctx Context) {
 		freeFunc.Call(nil, unsafe.Pointer(&ctx))
 	}
 
-	supportVisionFunc, err = currentLib.Prep("mtmd_support_vision", &ffi.TypeUint8, &ffi.TypePointer)
-	if err != nil {
+	if supportVisionFunc, err = lib.Prep("mtmd_support_vision", &ffi.TypeUint8, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	SupportVision = func(ctx Context) bool {
 		var result ffi.Arg
 		supportVisionFunc.Call(&result, unsafe.Pointer(&ctx))
@@ -165,11 +155,9 @@ func loadFuncs(currentLib ffi.Lib) {
 		return result.Bool()
 	}
 
-	inputChunksInitFunc, err = currentLib.Prep("mtmd_input_chunks_init", &ffi.TypePointer)
-	if err != nil {
+	if inputChunksInitFunc, err = lib.Prep("mtmd_input_chunks_init", &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	InputChunksInit = func() InputChunks {
 		var chunks InputChunks
 		inputChunksInitFunc.Call(unsafe.Pointer(&chunks))
@@ -177,11 +165,9 @@ func loadFuncs(currentLib ffi.Lib) {
 		return chunks
 	}
 
-	inputChunksSizeFunc, err = currentLib.Prep("mtmd_input_chunks_size", &ffi.TypeSint32, &ffi.TypePointer)
-	if err != nil {
+	if inputChunksSizeFunc, err = lib.Prep("mtmd_input_chunks_size", &ffi.TypeSint32, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	InputChunksSize = func(chunks InputChunks) uint32 {
 		var result ffi.Arg
 		inputChunksSizeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&chunks))
@@ -189,11 +175,9 @@ func loadFuncs(currentLib ffi.Lib) {
 		return uint32(result)
 	}
 
-	tokenizeFunc, err = currentLib.Prep("mtmd_tokenize", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypeUint64)
-	if err != nil {
+	if tokenizeFunc, err = lib.Prep("mtmd_tokenize", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypeUint64); err != nil {
 		panic(err)
 	}
-
 	Tokenize = func(ctx Context, out InputChunks, text *InputText, bitmaps *Bitmap, nBitmaps uint64) int32 {
 		var result ffi.Arg
 		tokenizeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&ctx), unsafe.Pointer(&out), unsafe.Pointer(&text), unsafe.Pointer(&bitmaps), unsafe.Pointer(&nBitmaps))
@@ -201,12 +185,10 @@ func loadFuncs(currentLib ffi.Lib) {
 		return int32(result)
 	}
 
-	helperEvalChunksFunc, err = currentLib.Prep("mtmd_helper_eval_chunks", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer,
-		&ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeUint8, &ffi.TypePointer)
-	if err != nil {
+	if helperEvalChunksFunc, err = lib.Prep("mtmd_helper_eval_chunks", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer,
+		&ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeUint8, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-
 	HelperEvalChunks = func(ctx Context, lctx llama.Context, chunks InputChunks, nPast llama.Pos, seqID llama.SeqId, nBatch int32, logitsLast bool, newNPast *llama.Pos) int32 {
 		var result ffi.Arg
 		helperEvalChunksFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&ctx), unsafe.Pointer(&lctx), unsafe.Pointer(&chunks), unsafe.Pointer(&nPast), unsafe.Pointer(&seqID),
