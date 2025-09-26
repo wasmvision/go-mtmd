@@ -102,7 +102,7 @@ var (
 	samplerFreeFunc ffi.Fun
 )
 
-func initSampling(lib ffi.Lib) {
+func loadSamplingFuncs(lib ffi.Lib) {
 	var err error
 	samplerChainDefaultParamsFunc, err = lib.Prep("llama_sampler_chain_default_params", &TypeSamplerChainParams)
 	if err != nil {

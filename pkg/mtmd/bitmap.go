@@ -39,7 +39,7 @@ var (
 	bitmapInitFromFileFunc ffi.Fun
 )
 
-func initBitmapFuncs(currentLib ffi.Lib) {
+func loadBitmapFuncs(currentLib ffi.Lib) {
 	var err error
 
 	bitmapInitFunc, err = currentLib.Prep("mtmd_bitmap_init", &ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypePointer)

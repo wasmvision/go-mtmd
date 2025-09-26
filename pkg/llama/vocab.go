@@ -49,7 +49,7 @@ var (
 	tokenizeFunc ffi.Fun
 )
 
-func initVocab(lib ffi.Lib) {
+func loadVocabFuncs(lib ffi.Lib) {
 	var err error
 	modelGetVocabFunc, err = lib.Prep("llama_model_get_vocab", &ffi.TypePointer, &ffi.TypePointer)
 	if err != nil {

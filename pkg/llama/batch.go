@@ -40,7 +40,7 @@ var (
 	batchGetOneFunc ffi.Fun
 )
 
-func initBatch(lib ffi.Lib) {
+func loadBatchFuncs(lib ffi.Lib) {
 	var err error
 	batchInitFunc, err = lib.Prep("llama_batch_init", &FFITypeBatch, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32)
 	if err != nil {

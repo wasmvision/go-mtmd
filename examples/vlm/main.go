@@ -29,8 +29,8 @@ func main() {
 	}
 
 	lib := loader.LoadLibrary(*libPath)
-	llama.Init(lib)
-	mtmd.Init(lib)
+	llama.Load(lib)
+	mtmd.Load(lib)
 
 	llama.BackendInit()
 	defer llama.BackendFree()

@@ -56,7 +56,7 @@ var (
 	modelNCtxTrainFunc ffi.Fun
 )
 
-func initModel(lib ffi.Lib) {
+func loadModelFuncs(lib ffi.Lib) {
 	var err error
 
 	modelDefaultParamsFunc, err = lib.Prep("llama_model_default_params", &FFITypeModelParams)

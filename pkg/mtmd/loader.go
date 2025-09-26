@@ -2,7 +2,7 @@ package mtmd
 
 import "github.com/jupiterrider/ffi"
 
-func Init(lib ffi.Lib) {
-	initFuncs(lib)
-	initBitmapFuncs(lib)
+func Load(lib ffi.Lib) {
+	loadFuncs(lib)
+	loadBitmapFuncs(lib)
 }

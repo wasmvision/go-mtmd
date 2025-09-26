@@ -72,7 +72,7 @@ var (
 	perfContextResetFunc ffi.Fun
 )
 
-func initFuncs(currentLib ffi.Lib) {
+func loadFuncs(currentLib ffi.Lib) {
 	var err error
 	backendInitFunc, err = currentLib.Prep("llama_backend_init", &ffi.TypeVoid)
 	if err != nil {

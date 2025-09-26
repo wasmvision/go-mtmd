@@ -107,7 +107,7 @@ var (
 	helperEvalChunksFunc ffi.Fun
 )
 
-func initFuncs(currentLib ffi.Lib) {
+func loadFuncs(currentLib ffi.Lib) {
 	var err error
 
 	defaultMarkerFunc, err = currentLib.Prep("mtmd_default_marker", &ffi.TypePointer)
