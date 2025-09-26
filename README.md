@@ -1,46 +1,66 @@
 # go-mtmd
 
+Go package that lets you call llama.cpp `mtmd` to perform multimodal inference using Vision Language Models (VLMs).
+
+Uses `purego` and `ffi` packages so no CGo is required.
+
+Borrows definitions from the https://github.com/dianlight/gollama.cpp package then modifies them rather heavily. Thank you!
+
+Still a work in progress.
 
 ```shell
-$ go run ../examples/simple/                                                                              
-loading libs                                                                                              
-init libs                                                                                                 
-loading all GGML backends                                                                                 
-load_backend: loaded RPC backend from /home/ron/Development/go-mtmd/lib/libggml-rpc.so                    
-load_backend: loaded CPU backend from /home/ron/Development/go-mtmd/lib/libggml-cpu-alderlake.so          
-useGPU? true                                                                                              
-MainGpu: 0                                                                                                
-Loading model /home/ron/Development/gollama.cpp/models/tinyllama-1.1b-chat-v1.0.Q2_K.gguf                                                                                                                           
-llama_model_loader: loaded meta data with 23 key-value pairs and 201 tensors from /home/ron/Development/gollama.cpp/models/tinyllama-1.1b-chat-v1.0.Q2_K.gguf (version GGUF V3 (latest))
-llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.         
-llama_model_loader: - kv   0:                       general.architecture str              = llama         
-llama_model_loader: - kv   1:                               general.name str              = tinyllama_tinyllama-1.1b-chat-v1.0
-llama_model_loader: - kv   2:                       llama.context_length u32              = 2048          
-llama_model_loader: - kv   3:                     llama.embedding_length u32              = 2048
-llama_model_loader: - kv   4:                          llama.block_count u32              = 22            
-llama_model_loader: - kv   5:                  llama.feed_forward_length u32              = 5632          
-llama_model_loader: - kv   6:                 llama.rope.dimension_count u32              = 64            
-llama_model_loader: - kv   7:                 llama.attention.head_count u32              = 32            
-llama_model_loader: - kv   8:              llama.attention.head_count_kv u32              = 4
-llama_model_loader: - kv   9:     llama.attention.layer_norm_rms_epsilon f32              = 0.000010
-llama_model_loader: - kv  10:                       llama.rope.freq_base f32              = 10000.000000
-llama_model_loader: - kv  11:                          general.file_type u32              = 10
-llama_model_loader: - kv  12:                       tokenizer.ggml.model str              = llama
-llama_model_loader: - kv  13:                      tokenizer.ggml.tokens arr[str,32000]   = ["<unk>", "<s>", "</s>", "<0x00>", "<...
-llama_model_loader: - kv  14:                      tokenizer.ggml.scores arr[f32,32000]   = [0.000000, 0.000000, 0.000000, 0.0000...
-llama_model_loader: - kv  15:                  tokenizer.ggml.token_type arr[i32,32000]   = [2, 3, 3, 6, 6, 6, 6, 6, 6, 6, 6, 6, ...
-llama_model_loader: - kv  16:                      tokenizer.ggml.merges arr[str,61249]   = ["▁ t", "e r", "i n", "▁ a", "e n...
-llama_model_loader: - kv  17:                tokenizer.ggml.bos_token_id u32              = 1
-llama_model_loader: - kv  18:                tokenizer.ggml.eos_token_id u32              = 2
-llama_model_loader: - kv  19:            tokenizer.ggml.unknown_token_id u32              = 0
-llama_model_loader: - kv  20:            tokenizer.ggml.padding_token_id u32              = 2
-llama_model_loader: - kv  21:                    tokenizer.chat_template str              = {% for message in messages %}\n{% if m...
-llama_model_loader: - kv  22:               general.quantization_version u32              = 2
-llama_model_loader: - type  f32:   45 tensors
-llama_model_loader: - type q2_K:   45 tensors
-llama_model_loader: - type q3_K:  110 tensors
-llama_model_loader: - type q6_K:    1 tensors
-print_info: file format = GGUF V3 (latest)
-print_info: file type   = Q2_K - Medium
-print_info: file size   = 459.11 MiB (3.50 BPW)
+$ go run ../examples/vlm/                                                                              
+ggml_cuda_init: GGML_CUDA_FORCE_MMQ:    no
+ggml_cuda_init: GGML_CUDA_FORCE_CUBLAS: no
+ggml_cuda_init: found 1 CUDA devices:
+  Device 0: NVIDIA GeForce RTX 4070 Laptop GPU, compute capability 8.9, VMM: yes
+register_backend: registered backend CUDA (1 devices)
+register_device: registered device CUDA0 (NVIDIA GeForce RTX 4070 Laptop GPU)
+register_backend: registered backend CPU (1 devices)
+register_device: registered device CPU (13th Gen Intel(R) Core(TM) i9-13900HX)
+load_backend: failed to find ggml_backend_init in /home/ron/Development/go-mtmd/lib/libggml-cuda.so
+load_backend: loaded RPC backend from /home/ron/Development/go-mtmd/lib/libggml-rpc.so
+register_backend: registered backend RPC (0 devices)
+ggml_backend_load_best: /home/ron/Development/go-mtmd/lib/libggml-cpu-sse42.so score: 5
+ggml_backend_load_best: /home/ron/Development/go-mtmd/lib/libggml-cpu-haswell.so score: 64
+ggml_backend_load_best: /home/ron/Development/go-mtmd/lib/libggml-cpu-sapphirerapids.so score: 0
+ggml_backend_load_best: /home/ron/Development/go-mtmd/lib/libggml-cpu-alderlake.so score: 128
+ggml_backend_load_best: /home/ron/Development/go-mtmd/lib/libggml-cpu-sandybridge.so score: 21
+ggml_backend_load_best: /home/ron/Development/go-mtmd/lib/libggml-cpu-x64.so score: 1
+ggml_backend_load_best: /home/ron/Development/go-mtmd/lib/libggml-cpu-skylakex.so score: 0
+ggml_backend_load_best: /home/ron/Development/go-mtmd/lib/libggml-cpu-icelake.so score: 0
+load_backend: loaded CPU backend from /home/ron/Development/go-mtmd/lib/libggml-cpu-alderlake.so
+register_backend: registered backend CPU (1 devices)
+register_device: registered device CPU (13th Gen Intel(R) Core(TM) i9-13900HX)
+Loading model /home/ron/Development/go-mtmd/models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf
+llama_model_load_from_file_impl: using device CUDA0 (NVIDIA GeForce RTX 4070 Laptop GPU) (0000:01:00.0) - 7657 MiB free
+llama_model_loader: loaded meta data with 27 key-value pairs and 434 tensors from /home/ron/Development/go-mtmd/models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf (version GGUF V3 (latest))
+...
+--- vision hparams ---
+load_hparams: image_size:         1024
+load_hparams: patch_size:         14
+load_hparams: has_llava_proj:     0
+load_hparams: minicpmv_version:   0
+load_hparams: proj_scale_factor:  0
+load_hparams: n_wa_pattern:       8
+
+load_hparams: model size:         805.59 MiB
+load_hparams: metadata size:      0.18 MiB
+ggml_gallocr_reserve_n: reallocating CUDA0 buffer from size 0.00 MiB to 3.60 MiB
+ggml_gallocr_reserve_n: reallocating CPU buffer from size 0.00 MiB to 0.16 MiB
+alloc_compute_meta:      CUDA0 compute buffer size =     3.60 MiB
+alloc_compute_meta:        CPU compute buffer size =     0.16 MiB
+check_node_graph_compatibility_and_refresh_copy_ops: disabling CUDA graphs due to batch size > 1 [ffn_inp-0] [2048 8 1 1]
+ggml_gallocr_needs_realloc: src 0 (inp_raw) of node inp_raw (view) is not valid
+ggml_gallocr_alloc_graph: cannot reallocate multi buffer graph automatically, call reserve
+ggml_backend_sched_alloc_splits: failed to allocate graph, reserving (backend_ids_changed = 0)
+ggml_gallocr_reserve_n: reallocating CUDA0 buffer from size 3.60 MiB to 76.54 MiB
+ggml_gallocr_reserve_n: reallocating CPU buffer from size 0.16 MiB to 5.12 MiB
+check_node_graph_compatibility_and_refresh_copy_ops: disabling CUDA graphs due to batch size > 1 [node_14] [30 30 1280 1]
+ggml_backend_sched_alloc_splits: failed to allocate graph, reserving (backend_ids_changed = 1)
+check_node_graph_compatibility_and_refresh_copy_ops: disabling CUDA graphs due to batch size > 1 [ffn_inp-0] [2048 225 1 1]
+ggml_backend_sched_alloc_splits: failed to allocate graph, reserving (backend_ids_changed = 1)
+check_node_graph_compatibility_and_refresh_copy_ops: disabling CUDA graphs due to batch size > 1 [ffn_inp-0] [2048 6 1 1]
+
+This is a close-up image of a person's eye.
 ```

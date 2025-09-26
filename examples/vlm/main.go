@@ -19,36 +19,24 @@ var (
 	prompt = "what is this?"
 )
 
-func chatTemplate(prompt string) string {
-	return fmt.Sprintf("<|im_start|>user\n%s<__media__><|im_end|>\n<|im_start|>assistant\n", prompt)
-}
-
 func main() {
-	fmt.Println("loading libs")
 	lib := loader.LoadLibrary(".")
-
-	fmt.Println("init libs")
 	llama.Init(lib)
 	mtmd.Init(lib)
 
-	fmt.Println("loading all GGML backends")
 	llama.GGMLBackendLoadAll()
 	defer llama.BackendFree()
 
 	params := llama.ModelDefaultParams()
-	fmt.Printf("Model params: %+v\n", params)
 
 	fmt.Println("Loading model", modelFile)
 	model := llama.ModelLoadFromFile(modelFile, params)
 	defer llama.ModelFree(model)
 
 	ctxParams := llama.ContextDefaultParams()
-	fmt.Printf("Context params: %+v\n", ctxParams)
-
 	ctxParams.NCtx = 4096
 	ctxParams.NBatch = 2048
 
-	fmt.Println("Init model")
 	lctx := llama.InitFromModel(model, ctxParams)
 	defer llama.Free(lctx)
 
@@ -59,16 +47,13 @@ func main() {
 	// utils.Warmup(lctx, model, vocab)
 
 	mctxParams := mtmd.ContextParamsDefault()
-	fmt.Printf("mtmd Context Params: %+v\n", mctxParams)
 
 	// mctxParams.UseGPU = true
 	// mctxParams.Verbosity = llama.LogLevel(1)
 
-	fmt.Println("Loading projector", projFile)
 	mtmdCtx := mtmd.InitFromFile(projFile, model, mctxParams)
 	defer mtmd.Free(mtmdCtx)
 
-	fmt.Println("loading template")
 	pmpt := chatTemplate(prompt)
 	p, _ := unix.BytePtrFromString(pmpt)
 	input := &mtmd.InputText{
@@ -90,6 +75,8 @@ func main() {
 	mtmd.HelperEvalChunks(mtmdCtx, lctx, output, 0, 0, int32(ctxParams.NBatch), true, &n)
 
 	batch := llama.BatchInit(1, 0, 1)
+
+	fmt.Println()
 	for i := 0; i < 0x7fffffff; i++ {
 		token := llama.SamplerSample(sampler, lctx, -1)
 		llama.SamplerAccept(sampler, token)
@@ -118,6 +105,10 @@ func main() {
 		llama.Decode(lctx, batch)
 		n++
 	}
+}
+
+func chatTemplate(prompt string) string {
+	return fmt.Sprintf("<|im_start|>user\n%s<__media__><|im_end|>\n<|im_start|>assistant\n", prompt)
 }
 
 func setupSampler(model llama.Model, vocab llama.Vocab) llama.Sampler {
