@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"unsafe"
 
 	"github.com/wasmvision/go-mtmd/pkg/llama"
 	"github.com/wasmvision/go-mtmd/pkg/loader"
 	"github.com/wasmvision/go-mtmd/pkg/mtmd"
+	"golang.org/x/sys/unix"
 )
 
 var (
@@ -63,14 +65,16 @@ func main() {
 		fmt.Println("llama context free")
 	}()
 
+	sampler := setupSampler(vocab)
+
 	// fmt.Println("warming up")
-	// warmup(lctx, model, vocab)
+	// utils.Warmup(lctx, model, vocab)
 
 	mctxParams := mtmd.ContextParamsDefault()
 	fmt.Printf("mtmd Context Params: %+v\n", mctxParams)
 
 	// mctxParams.UseGPU = true
-	// mctxParams.Verbosity = llama.LogLevelError
+	mctxParams.Verbosity = llama.LogLevelError
 
 	fmt.Println("Loading projector", projFile)
 	mtmdCtx := mtmd.InitFromFile(projFile, model, mctxParams)
@@ -102,57 +106,35 @@ func main() {
 	bt := unsafe.SliceData(bitmaps)
 
 	fmt.Println("tokenize")
-	mtmd.Tokenize(mtmdCtx, output, input, bt, 1)
+	stats := mtmd.Tokenize(mtmdCtx, output, input, bt, 1)
+	fmt.Println("tokenize result", stats)
+
+	fmt.Println("got chunks", mtmd.InputChunksSize(output))
 
 	var n llama.Pos
-	mtmd.HelperEvalChunks(mtmdCtx, lctx, output, 0, 0, int32(ctxParams.NBatch), true, &n)
+	res := mtmd.HelperEvalChunks(mtmdCtx, lctx, output, 0, 0, int32(ctxParams.NBatch), true, &n)
 
-	fmt.Println("new pos", n)
+	fmt.Println("res", res, "new pos", n)
 
-	sampler := setupSampler()
-
-	// batch = llama_batch_init(1, 0, 1); // batch for next token generation
 	batch := llama.BatchInit(1, 0, 1)
-	// for (int i = 0; i < n_predict; i++) {
-	//tokens := []llama.Token{}
-
 	for {
-		//     if (i > n_predict || !g_is_generating || g_is_interrupted) {
-		//         LOG("\n");
-		//         break;
-		//     }
-
-		//     llama_token token_id = common_sampler_sample(ctx.smpl, ctx.lctx, -1);
 		token := llama.SamplerSample(sampler, lctx, -1)
-		//     generated_tokens.push_back(token_id);
-		//tokens = append(tokens, token)
-		//     common_sampler_accept(ctx.smpl, token_id, true);
 		llama.SamplerAccept(sampler, token)
 
-		//     if (llama_vocab_is_eog(ctx.vocab, token_id) || ctx.check_antiprompt(generated_tokens)) {
 		if llama.VocabIsEOG(vocab, token) {
 			// end of generation
 			fmt.Println()
+			fmt.Println("Done.")
 			break
 		}
 
-		//     LOG("%s", common_token_to_piece(ctx.lctx, token_id).c_str());
-		//     fflush(stdout);
-
-		data := make([]byte, 24)
+		data := make([]byte, 36)
 		buf := unsafe.SliceData(data)
-		llama.TokenToPiece(vocab, token, buf, 24, 0, true)
+		llama.TokenToPiece(vocab, token, buf, 36, 0, true)
 
-		fmt.Print(string(data))
-		//     if (g_is_interrupted) {
-		//         LOG("\n");
-		//         break;
-		//     }
+		res := unix.BytePtrToString(buf)
+		fmt.Print(res)
 
-		//     // eval the token
-		//     common_batch_clear(ctx.batch);
-
-		//     common_batch_add(ctx.batch, token_id, ctx.n_past++, {0}, true);
 		batch.NTokens = 1
 		batch.Token = &token
 		batch.Pos = &n
@@ -160,21 +142,46 @@ func main() {
 		batch.NSeqId = &sz
 		seqs := unsafe.SliceData([]llama.SeqId{0})
 		batch.SeqId = &seqs
+
 		llama.Decode(lctx, batch)
 		n++
 	}
 }
 
-func setupSampler() llama.Sampler {
-	// sparams = llama_sampler_chain_default_params();
+func setupSampler(vocab llama.Vocab) llama.Sampler {
 	params := llama.SamplerChainDefaultParams()
-
-	// llama_sampler * smpl = llama_sampler_chain_init(sparams);
 	sampler := llama.SamplerChainInit(params)
 
-	// llama_sampler_chain_add(smpl, llama_sampler_init_dist(seed));
-	greedy := llama.SamplerInitGreedy()
-	llama.SamplerChainAdd(sampler, greedy)
+	// for (llama_token i = 0; i < llama_vocab_n_tokens(vocab); i++) {
+	//     if (llama_vocab_is_eog(vocab, i)) {
+	//         LOG_INF("%s: added %s logit bias = %f\n", __func__, common_token_to_piece(lctx, i).c_str(), -INFINITY);
+	//         params.sampling.logit_bias_eog.push_back({i, -INFINITY});
+	//     }
+	// }
+
+	// if (params.sampling.ignore_eos) {
+	//     // add EOG biases to the active set of logit biases
+	//     params.sampling.logit_bias.insert(
+	//             params.sampling.logit_bias.end(),
+	//             params.sampling.logit_bias_eog.begin(), params.sampling.logit_bias_eog.end());
+	// }
+	logitBiasEOG := make([]llama.LogitBias, 0)
+	nTokens := llama.VocabNTokens(vocab)
+
+	for i := int32(0); i < nTokens; i++ {
+		token := llama.Token(i)
+		if llama.VocabIsEOG(vocab, token) {
+			logitBiasEOG = append(logitBiasEOG, llama.LogitBias{Token: token, Bias: -1 * math.MaxFloat32})
+		}
+	}
+
+	bias := llama.SamplerInitLogitBias(nTokens, int32(len(logitBiasEOG)), unsafe.SliceData(logitBiasEOG))
+	llama.SamplerChainAdd(sampler, bias)
+
+	// greedy := llama.SamplerInitGreedy()
+	// llama.SamplerChainAdd(sampler, greedy)
+	dist := llama.SamplerInitDist(llama.DEFAULT_SEED)
+	llama.SamplerChainAdd(sampler, dist)
 
 	return sampler
 }

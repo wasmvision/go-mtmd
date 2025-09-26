@@ -83,6 +83,10 @@ var (
 	InputChunksInit     func() InputChunks
 	inputChunksInitFunc ffi.Fun
 
+	// MTMD_API size_t mtmd_input_chunks_size(const mtmd_input_chunks * chunks);
+	InputChunksSize     func(chunks InputChunks) uint32
+	inputChunksSizeFunc ffi.Fun
+
 	// MTMD_API int32_t mtmd_tokenize(mtmd_context * ctx,
 	//                            mtmd_input_chunks * output,
 	//                            const mtmd_input_text * text,
@@ -171,6 +175,18 @@ func initFuncs(currentLib ffi.Lib) {
 		inputChunksInitFunc.Call(unsafe.Pointer(&chunks))
 
 		return chunks
+	}
+
+	inputChunksSizeFunc, err = currentLib.Prep("mtmd_input_chunks_size", &ffi.TypeSint32, &ffi.TypePointer)
+	if err != nil {
+		panic(err)
+	}
+
+	InputChunksSize = func(chunks InputChunks) uint32 {
+		var result ffi.Arg
+		inputChunksSizeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&chunks))
+
+		return uint32(result)
 	}
 
 	tokenizeFunc, err = currentLib.Prep("mtmd_tokenize", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypeUint64)

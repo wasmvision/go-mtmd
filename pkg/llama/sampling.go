@@ -29,6 +29,17 @@ var (
 	SamplerInitGreedy     func() Sampler
 	samplerInitGreedyFunc ffi.Fun
 
+	// LLAMA_API struct llama_sampler * llama_sampler_init_dist  (uint32_t seed);
+	SamplerInitDist     func(seed uint32) Sampler
+	samplerInitDistFunc ffi.Fun
+
+	// LLAMA_API struct llama_sampler * llama_sampler_init_logit_bias(
+	//                  int32_t   n_vocab,
+	//                  int32_t   n_logit_bias,
+	//   				const llama_logit_bias * logit_bias);
+	SamplerInitLogitBias     func(nVocab int32, nLogitBias int32, logitBias *LogitBias) Sampler
+	samplerInitLogitBiasFunc ffi.Fun
+
 	// LLAMA_API llama_token llama_sampler_sample(struct llama_sampler * smpl, struct llama_context * ctx, int32_t idx);
 	SamplerSample     func(smpl Sampler, ctx Context, idx int32) Token
 	samplerSampleFunc ffi.Fun
@@ -85,6 +96,30 @@ func initSampling(lib ffi.Lib) {
 	SamplerInitGreedy = func() Sampler {
 		var p Sampler
 		samplerInitGreedyFunc.Call(unsafe.Pointer(&p))
+
+		return p
+	}
+
+	samplerInitDistFunc, err = lib.Prep("llama_sampler_init_dist", &ffi.TypePointer, &ffi.TypeUint32)
+	if err != nil {
+		panic(err)
+	}
+
+	SamplerInitDist = func(seed uint32) Sampler {
+		var p Sampler
+		samplerInitDistFunc.Call(unsafe.Pointer(&p), unsafe.Pointer(&seed))
+
+		return p
+	}
+
+	samplerInitLogitBiasFunc, err = lib.Prep("llama_sampler_init_logit_bias", &ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypePointer)
+	if err != nil {
+		panic(err)
+	}
+
+	SamplerInitLogitBias = func(nVocab int32, nLogitBias int32, logitBias *LogitBias) Sampler {
+		var p Sampler
+		samplerInitLogitBiasFunc.Call(unsafe.Pointer(&p), unsafe.Pointer(&nVocab), unsafe.Pointer(&nLogitBias), unsafe.Pointer(&logitBias))
 
 		return p
 	}
