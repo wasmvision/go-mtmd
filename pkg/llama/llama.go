@@ -24,6 +24,9 @@ const (
 
 	STATE_SEQ_MAGIC   = FILE_MAGIC_GGSQ
 	STATE_SEQ_VERSION = 2
+
+	// maximum token value
+	MaxToken = 0x7fffffff
 )
 
 // Enums

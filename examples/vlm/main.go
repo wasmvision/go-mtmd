@@ -1,8 +1,11 @@
 package main
 
 import (
+	"errors"
+	"flag"
 	"fmt"
 	"math"
+	"os"
 	"unsafe"
 
 	"github.com/wasmvision/yzma/pkg/llama"
@@ -12,15 +15,20 @@ import (
 )
 
 var (
-	modelFile = "/home/ron/Development/yzma/models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf"
-	projFile  = "/home/ron/Development/yzma/models/mmproj-Qwen2.5-VL-3B-Instruct-Q8_0.gguf"
-	imageFile = "/home/ron/Development/yzma/images/roneye_400x400.jpg"
-
-	prompt = "what is this?"
+	modelFile *string
+	projFile  *string
+	prompt    *string
+	imageFile *string
+	libPath   *string
 )
 
 func main() {
-	lib := loader.LoadLibrary(".")
+	if err := handleFlags(); err != nil {
+		showUsage()
+		os.Exit(0)
+	}
+
+	lib := loader.LoadLibrary(*libPath)
 	llama.Init(lib)
 	mtmd.Init(lib)
 
@@ -29,8 +37,8 @@ func main() {
 
 	params := llama.ModelDefaultParams()
 
-	fmt.Println("Loading model", modelFile)
-	model := llama.ModelLoadFromFile(modelFile, params)
+	fmt.Println("Loading model", *modelFile)
+	model := llama.ModelLoadFromFile(*modelFile, params)
 	defer llama.ModelFree(model)
 
 	ctxParams := llama.ContextDefaultParams()
@@ -47,14 +55,13 @@ func main() {
 	// utils.Warmup(lctx, model, vocab)
 
 	mctxParams := mtmd.ContextParamsDefault()
-
 	// mctxParams.UseGPU = true
 	// mctxParams.Verbosity = llama.LogLevel(1)
 
-	mtmdCtx := mtmd.InitFromFile(projFile, model, mctxParams)
+	mtmdCtx := mtmd.InitFromFile(*projFile, model, mctxParams)
 	defer mtmd.Free(mtmdCtx)
 
-	pmpt := chatTemplate(prompt)
+	pmpt := chatTemplate(*prompt)
 	p, _ := unix.BytePtrFromString(pmpt)
 	input := &mtmd.InputText{
 		Text:         p,
@@ -64,7 +71,7 @@ func main() {
 
 	output := mtmd.InputChunksInit()
 
-	bitmap := mtmd.BitmapInitFromFile(mtmdCtx, imageFile)
+	bitmap := mtmd.BitmapInitFromFile(mtmdCtx, *imageFile)
 	defer mtmd.BitmapFree(bitmap)
 
 	bitmaps := []mtmd.Bitmap{bitmap}
@@ -77,7 +84,8 @@ func main() {
 	batch := llama.BatchInit(1, 0, 1)
 
 	fmt.Println()
-	for i := 0; i < 0x7fffffff; i++ {
+
+	for i := 0; i < llama.MaxToken; i++ {
 		token := llama.SamplerSample(sampler, lctx, -1)
 		llama.SamplerAccept(sampler, token)
 
@@ -172,4 +180,31 @@ func setupSampler(model llama.Model, vocab llama.Vocab) llama.Sampler {
 	llama.SamplerChainAdd(sampler, dist)
 
 	return sampler
+}
+
+func showUsage() {
+	fmt.Println(`
+Usage:
+vlm -model [model file path] -proj [projector file path] -lib [llama.cpp .so file path] -prompt [what you want to ask] -image [image file path]`)
+}
+
+func handleFlags() error {
+	modelFile = flag.String("model", "", "model file to use")
+	projFile = flag.String("proj", "", "projector file to use")
+	prompt = flag.String("prompt", "what is this?", "prompt")
+	imageFile = flag.String("image", "", "image file to use")
+	libPath = flag.String("lib", "", "path to llama.cpp compiled library files")
+
+	flag.Parse()
+
+	if len(*modelFile) == 0 ||
+		len(*projFile) == 0 ||
+		len(*prompt) == 0 ||
+		len(*imageFile) == 0 ||
+		len(*libPath) == 0 {
+
+		return errors.New("missing a flag")
+	}
+
+	return nil
 }

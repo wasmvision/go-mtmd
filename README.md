@@ -8,8 +8,14 @@ Still a work in progress, but is minimally functioning.
 
 Borrows definitions from the https://github.com/dianlight/gollama.cpp package then modifies them rather heavily. Thank you!
 
+You have to add the llama.cpp .so files to your `LD_LIBRARY_PATH` env variable:
+
 ```shell
-$ go run ../examples/vlm/                                                                              
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/ron/Development/yzma/lib
+```
+
+```shell
+$ go run ./examples/vlm/ -model ./models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf -proj ./models/mmproj-Qwen2.5-VL-3B-Instruct-Q8_0.gguf -lib ./lib -image ./images/roneye_400x400.jpg -prompt "What is in this picture?"                                                                             
 ggml_cuda_init: GGML_CUDA_FORCE_MMQ:    no
 ggml_cuda_init: GGML_CUDA_FORCE_CUBLAS: no
 ggml_cuda_init: found 1 CUDA devices:
