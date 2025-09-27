@@ -1,10 +1,10 @@
 # yzma
 
-yzma lets you perform multimodal inference with Vision Language Models (VLMs) on your own hardware by using the [`llama.cpp`](https://github.com/ggml-org/llama.cpp) libraries.
+`yzma` lets you perform multimodal inference with Vision Language Models (VLMs) on your own hardware by using the [`llama.cpp`](https://github.com/ggml-org/llama.cpp) libraries.
 
 It uses the [`purego`](https://github.com/ebitengine/purego) and [`ffi`](https://github.com/JupiterRider/ffi) packages so calls can be made directly to `llama.cpp` without CGo.
 
-Still a work in progress, but is already functioning.
+Still a work in progress but it is already functioning.
 
 Borrows definitions from the https://github.com/dianlight/gollama.cpp package then modifies them rather heavily. Thank you!
 
@@ -19,6 +19,8 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/ron/Development/yzma/lib
 
 ### VLM example
 
+This example uses the [`Qwen2.5-VL-3B-Instruct-Q8_0`](https://huggingface.co/ggml-org/Qwen2.5-VL-3B-Instruct-GGUF) VLM model to process a input of a text prompt and an image, and then displays the result.
+
 ```shell
 $ go run ./examples/vlm/ -model ./models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf -proj ./models/mmproj-Qwen2.5-VL-3B-Instruct-Q8_0.gguf -lib ./lib -image ./images/domestic_llama.jpg -prompt "What is in this picture?" 2>/dev/null
 Loading model ./models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf
@@ -30,7 +32,12 @@ image decoded (batch 1/1) in 208 ms
 The picture shows a white llama standing in a fenced-in area, possibly a zoo or a wildlife park. The llama is the main focus of the image, and it appears to be looking to the right. The background features a grassy area with trees and a fence, and there are some vehicles visible in the distance.
 ```
 
+[See the code here](./examples/vlm/main.go).
+
 ### Chat example
+
+You can also use `yzma` to do inference on text language models. This example uses the [`tinyllama-1.1b-chat-v1.0.Q2_K`](https://huggingface.co/reach-vb/TinyLlama-1.1B-Chat-v1.0-Q2_K-GGUF) Small Language Model (SLM) to process a text input and display the result.
+
 
 ```shell
 $ go run ./examples/chat/ -model ./models/tinyllama-1.1b-chat-v1.0.Q2_K.gguf -lib ./lib -prompt "Are you ready to go?"                                                   
@@ -69,3 +76,5 @@ check_node_graph_compatibility_and_refresh_copy_ops: disabling CUDA graphs due t
                                                                                                                                                                          
 JASON: (smiling) Yeah, I'm ready to go.
 ```
+
+[See the code here](./examples/chat/main.go).
