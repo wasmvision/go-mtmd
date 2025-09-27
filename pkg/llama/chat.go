@@ -39,3 +39,10 @@ func loadChatFuncs(lib ffi.Lib) {
 		return int32(result)
 	}
 }
+
+func NewChatMessage(role, content string) ChatMessage {
+	r, _ := unix.BytePtrFromString(role)
+	c, _ := unix.BytePtrFromString(content)
+
+	return ChatMessage{Role: r, Content: c}
+}

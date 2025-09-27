@@ -47,26 +47,12 @@ func main() {
 	defer llama.Free(lctx)
 
 	vocab := llama.ModelGetVocab(model)
-
-	// add default samplers
-	sampler := utils.NewSampler(model, []llama.SamplerType{
-		llama.SamplerTypePenalties,
-		llama.SamplerTypeDry,
-		llama.SamplerTypeTopNSigma,
-		llama.SamplerTypeTopK,
-		llama.SamplerTypeTypicalP,
-		llama.SamplerTypeTopP,
-		llama.SamplerTypeMinP,
-		llama.SamplerTypeXTC,
-		llama.SamplerTypeTemperature,
-	})
-
+	sampler := utils.NewSampler(model, utils.DefaultSamplers)
 	mtmdCtx := mtmd.InitFromFile(*projFile, model, mtmd.ContextParamsDefault())
 	defer mtmd.Free(mtmdCtx)
 
-	input := mtmd.NewInputText(chatTemplate(*prompt), true, true)
 	output := mtmd.InputChunksInit()
-
+	input := mtmd.NewInputText(chatTemplate(*prompt), true, true)
 	bitmap := mtmd.BitmapInitFromFile(mtmdCtx, *imageFile)
 	defer mtmd.BitmapFree(bitmap)
 
@@ -107,16 +93,13 @@ func main() {
 }
 
 func chatTemplate(prompt string) string {
-	role, _ := unix.BytePtrFromString("user")
-	content, _ := unix.BytePtrFromString(prompt + mtmd.DefaultMarker())
-
-	chat := []llama.ChatMessage{llama.ChatMessage{Role: role, Content: content}}
+	chat := []llama.ChatMessage{llama.NewChatMessage("user", prompt+mtmd.DefaultMarker())}
 	buf := make([]byte, 1024)
 
 	llama.ChatApplyTemplate("chatml", chat, false, buf)
 	result := unix.BytePtrToString(unsafe.SliceData(buf))
 
-	// start generation
+	// add to start generation
 	result += "<|im_start|>assistant\n"
 
 	return result

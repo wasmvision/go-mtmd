@@ -8,6 +8,20 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+var (
+	DefaultSamplers = []llama.SamplerType{
+		llama.SamplerTypePenalties,
+		llama.SamplerTypeDry,
+		llama.SamplerTypeTopNSigma,
+		llama.SamplerTypeTopK,
+		llama.SamplerTypeTypicalP,
+		llama.SamplerTypeTopP,
+		llama.SamplerTypeMinP,
+		llama.SamplerTypeXTC,
+		llama.SamplerTypeTemperature,
+	}
+)
+
 // NewSampler creates a new sampling chain.
 func NewSampler(model llama.Model, samplers []llama.SamplerType) llama.Sampler {
 	vocab := llama.ModelGetVocab(model)

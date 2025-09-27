@@ -4,17 +4,13 @@ import (
 	"testing"
 
 	"github.com/wasmvision/yzma/pkg/loader"
-	"golang.org/x/sys/unix"
 )
 
 func TestChat(t *testing.T) {
 	testSetup(t)
 	defer testCleanup(t)
 
-	role, _ := unix.BytePtrFromString("user")
-	content, _ := unix.BytePtrFromString("what is going on?")
-
-	chat := []ChatMessage{ChatMessage{Role: role, Content: content}}
+	chat := []ChatMessage{NewChatMessage("user", "what is going on?")}
 	buf := make([]byte, 1024)
 
 	sz := ChatApplyTemplate("chatml", chat, false, buf)
