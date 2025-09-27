@@ -72,30 +72,30 @@ var (
 	perfContextResetFunc ffi.Fun
 )
 
-func loadFuncs(currentLib ffi.Lib) {
+func loadFuncs(lib ffi.Lib) {
 	var err error
-	if backendInitFunc, err = currentLib.Prep("llama_backend_init", &ffi.TypeVoid); err != nil {
+	if backendInitFunc, err = lib.Prep("llama_backend_init", &ffi.TypeVoid); err != nil {
 		panic(err)
 	}
 	BackendInit = func() {
 		backendInitFunc.Call(nil)
 	}
 
-	if backendFreeFunc, err = currentLib.Prep("llama_backend_init", &ffi.TypeVoid); err != nil {
+	if backendFreeFunc, err = lib.Prep("llama_backend_init", &ffi.TypeVoid); err != nil {
 		panic(err)
 	}
 	BackendFree = func() {
 		backendFreeFunc.Call(nil)
 	}
 
-	if ggmlBackendLoadAllFunc, err = currentLib.Prep("ggml_backend_load_all", &ffi.TypeVoid); err != nil {
+	if ggmlBackendLoadAllFunc, err = lib.Prep("ggml_backend_load_all", &ffi.TypeVoid); err != nil {
 		panic(err)
 	}
 	GGMLBackendLoadAll = func() {
 		ggmlBackendLoadAllFunc.Call(nil)
 	}
 
-	if contextDefaultParamsFunc, err = currentLib.Prep("llama_context_default_params", &FFITypeContextParams); err != nil {
+	if contextDefaultParamsFunc, err = lib.Prep("llama_context_default_params", &FFITypeContextParams); err != nil {
 		panic(err)
 	}
 	ContextDefaultParams = func() ContextParams {
@@ -104,21 +104,21 @@ func loadFuncs(currentLib ffi.Lib) {
 		return p
 	}
 
-	if freeFunc, err = currentLib.Prep("llama_free", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
+	if freeFunc, err = lib.Prep("llama_free", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
 	Free = func(ctx Context) {
 		freeFunc.Call(nil, unsafe.Pointer(&ctx))
 	}
 
-	if setWarmupFunc, err = currentLib.Prep("llama_set_warmup", &ffi.TypeVoid, &ffi.TypePointer, &ffi.TypeUint8); err != nil {
+	if setWarmupFunc, err = lib.Prep("llama_set_warmup", &ffi.TypeVoid, &ffi.TypePointer, &ffi.TypeUint8); err != nil {
 		panic(err)
 	}
 	SetWarmup = func(ctx Context, warmup bool) {
 		setWarmupFunc.Call(nil, unsafe.Pointer(&ctx), &warmup)
 	}
 
-	if encodeFunc, err = currentLib.Prep("llama_encode", &ffi.TypeSint32, &ffi.TypePointer, &FFITypeBatch); err != nil {
+	if encodeFunc, err = lib.Prep("llama_encode", &ffi.TypeSint32, &ffi.TypePointer, &FFITypeBatch); err != nil {
 		panic(err)
 	}
 	Encode = func(ctx Context, batch Batch) int32 {
@@ -128,7 +128,7 @@ func loadFuncs(currentLib ffi.Lib) {
 		return int32(result)
 	}
 
-	if decodeFunc, err = currentLib.Prep("llama_decode", &ffi.TypeSint32, &ffi.TypePointer, &FFITypeBatch); err != nil {
+	if decodeFunc, err = lib.Prep("llama_decode", &ffi.TypeSint32, &ffi.TypePointer, &FFITypeBatch); err != nil {
 		panic(err)
 	}
 	Decode = func(ctx Context, batch Batch) int32 {
@@ -138,14 +138,14 @@ func loadFuncs(currentLib ffi.Lib) {
 		return int32(result)
 	}
 
-	if memoryClearFunc, err = currentLib.Prep("llama_memory_clear", &ffi.TypeVoid, &ffi.TypePointer, &ffi.TypeUint8); err != nil {
+	if memoryClearFunc, err = lib.Prep("llama_memory_clear", &ffi.TypeVoid, &ffi.TypePointer, &ffi.TypeUint8); err != nil {
 		panic(err)
 	}
 	MemoryClear = func(mem Memory, data bool) {
 		memoryClearFunc.Call(nil, unsafe.Pointer(&mem), unsafe.Pointer(&data))
 	}
 
-	if getMemoryFunc, err = currentLib.Prep("llama_get_memory", &ffi.TypePointer, &ffi.TypePointer); err != nil {
+	if getMemoryFunc, err = lib.Prep("llama_get_memory", &ffi.TypePointer, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
 	GetMemory = func(ctx Context) Memory {
@@ -155,14 +155,14 @@ func loadFuncs(currentLib ffi.Lib) {
 		return mem
 	}
 
-	if synchronizeFunc, err = currentLib.Prep("llama_synchronize", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
+	if synchronizeFunc, err = lib.Prep("llama_synchronize", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
 	Synchronize = func(ctx Context) {
 		synchronizeFunc.Call(nil, unsafe.Pointer(&ctx))
 	}
 
-	if perfContextResetFunc, err = currentLib.Prep("llama_perf_context_reset", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
+	if perfContextResetFunc, err = lib.Prep("llama_perf_context_reset", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
 	PerfContextReset = func(ctx Context) {
