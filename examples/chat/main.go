@@ -5,11 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"unsafe"
 
 	"github.com/wasmvision/yzma/pkg/llama"
 	"github.com/wasmvision/yzma/pkg/loader"
-	"golang.org/x/sys/unix"
 )
 
 var (
@@ -38,11 +36,12 @@ func main() {
 	sampler := llama.SamplerChainInit(llama.SamplerChainDefaultParams())
 	llama.SamplerChainAdd(sampler, llama.SamplerInitGreedy())
 
-	p, _ := unix.BytePtrFromString(*prompt)
-	count := -llama.Tokenize(vocab, p, int32(len(*prompt)), nil, 0, true, false)
+	// call once to get the size
+	count := -llama.Tokenize(vocab, *prompt, nil, true, false)
 
+	// now get the actual tokens
 	tokens := make([]llama.Token, count)
-	llama.Tokenize(vocab, p, int32(len(*prompt)), unsafe.SliceData(tokens), count, true, false)
+	llama.Tokenize(vocab, *prompt, tokens, true, false)
 
 	ctxParams := llama.ContextDefaultParams()
 	ctxParams.NCtx = uint32(count + 32)
@@ -51,7 +50,7 @@ func main() {
 	lctx := llama.InitFromModel(model, ctxParams)
 	defer llama.Free(lctx)
 
-	batch := llama.BatchGetOne(unsafe.SliceData(tokens), int32(len(tokens)))
+	batch := llama.BatchGetOne(tokens)
 
 	if llama.ModelHasEncoder(model) {
 		llama.Encode(lctx, batch)
@@ -61,7 +60,7 @@ func main() {
 			start = llama.VocabBOS(vocab)
 		}
 
-		batch = llama.BatchGetOne(unsafe.SliceData([]llama.Token{start}), int32(1))
+		batch = llama.BatchGetOne([]llama.Token{start})
 	}
 
 	fmt.Println()
@@ -77,14 +76,12 @@ func main() {
 			break
 		}
 
-		data := make([]byte, 36)
-		buf := unsafe.SliceData(data)
-		llama.TokenToPiece(vocab, token, buf, int32(len(data)), 0, true)
+		buf := make([]byte, 36)
+		llama.TokenToPiece(vocab, token, buf, 0, true)
 
-		res := unix.BytePtrToString(buf)
-		fmt.Print(res)
+		fmt.Print(string(buf))
 
-		batch = llama.BatchGetOne(unsafe.SliceData([]llama.Token{token}), int32(1))
+		batch = llama.BatchGetOne([]llama.Token{token})
 	}
 
 	fmt.Println()

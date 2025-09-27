@@ -2,7 +2,6 @@ package llama
 
 import (
 	"testing"
-	"unsafe"
 
 	"github.com/wasmvision/yzma/pkg/loader"
 	"golang.org/x/sys/unix"
@@ -16,15 +15,14 @@ func TestChat(t *testing.T) {
 	content, _ := unix.BytePtrFromString("what is going on?")
 
 	chat := []ChatMessage{ChatMessage{Role: role, Content: content}}
-	data := make([]byte, 1024)
-	buf := unsafe.SliceData(data)
+	buf := make([]byte, 1024)
 
-	sz := ChatApplyTemplate("chatml", unsafe.SliceData(chat), 1, false, buf, int32(len(data)))
+	sz := ChatApplyTemplate("chatml", chat, false, buf)
 	if sz <= 0 {
 		t.Fatal("unable to apply chat template")
 	}
 
-	result := unix.BytePtrToString(buf)
+	result := string(buf)
 	if len(result) == 0 {
 		t.Fatal("invalid output from chat template")
 	}

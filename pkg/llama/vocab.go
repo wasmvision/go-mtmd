@@ -4,6 +4,7 @@ import (
 	"unsafe"
 
 	"github.com/jupiterrider/ffi"
+	"golang.org/x/sys/unix"
 )
 
 var (
@@ -34,7 +35,7 @@ var (
 	// 						int32_t   length,
 	// 						int32_t   lstrip,
 	// 							bool   special);
-	TokenToPiece     func(vocab Vocab, token Token, buf *byte, len int32, lstrip int32, special bool) int32
+	TokenToPiece     func(vocab Vocab, token Token, buf []byte, lstrip int32, special bool) int32
 	tokenToPieceFunc ffi.Fun
 
 	// LLAMA_API int32_t llama_tokenize(
@@ -45,7 +46,7 @@ var (
 	//                      int32_t   n_tokens_max,
 	//                         bool   add_special,
 	//                         bool   parse_special);
-	Tokenize     func(vocab Vocab, text *byte, textLen int32, tokens *Token, nTokensMax int32, addSpecial bool, parseSpecial bool) int32
+	Tokenize     func(vocab Vocab, text string, tokens []Token, addSpecial bool, parseSpecial bool) int32
 	tokenizeFunc ffi.Fun
 )
 
@@ -105,10 +106,16 @@ func loadVocabFuncs(lib ffi.Lib) {
 		&ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeUint8); err != nil {
 		panic(err)
 	}
-	TokenToPiece = func(vocab Vocab, token Token, buf *byte, len int32, lstrip int32, special bool) int32 {
+	TokenToPiece = func(vocab Vocab, token Token, buf []byte, lstrip int32, special bool) int32 {
+		piece := make([]byte, len(buf)+1)
+		b := unsafe.SliceData(piece)
+		bLen := int32(len(piece))
+
 		var result ffi.Arg
-		tokenToPieceFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&vocab), unsafe.Pointer(&token), unsafe.Pointer(&buf),
-			&len, &lstrip, &special)
+		tokenToPieceFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&vocab), unsafe.Pointer(&token), unsafe.Pointer(&b),
+			&bLen, &lstrip, &special)
+
+		copy(buf, piece)
 
 		return int32(result)
 	}
@@ -117,10 +124,16 @@ func loadVocabFuncs(lib ffi.Lib) {
 		&ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeUint8, &ffi.TypeUint8); err != nil {
 		panic(err)
 	}
-	Tokenize = func(vocab Vocab, text *byte, textLen int32, tokens *Token, nTokensMax int32, addSpecial bool, parseSpecial bool) int32 {
+	Tokenize = func(vocab Vocab, text string, tokens []Token, addSpecial bool, parseSpecial bool) int32 {
+		txt, _ := unix.BytePtrFromString(text)
+		txtLen := int32(len(text))
+
+		toks := unsafe.SliceData(tokens)
+		nTokensMax := len(tokens)
+
 		var result ffi.Arg
-		tokenizeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&vocab), unsafe.Pointer(&text), &textLen,
-			unsafe.Pointer(&tokens), &nTokensMax, &addSpecial, &parseSpecial)
+		tokenizeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&vocab), unsafe.Pointer(&txt), &txtLen,
+			unsafe.Pointer(&toks), &nTokensMax, &addSpecial, &parseSpecial)
 
 		return int32(result)
 	}

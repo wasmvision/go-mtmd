@@ -26,7 +26,7 @@ var (
 	// LLAMA_API struct llama_batch llama_batch_get_one(
 	//               llama_token * tokens,
 	//                   int32_t   n_tokens);
-	BatchGetOne     func(tokens *Token, nTokens int32) Batch
+	BatchGetOne     func(tokens []Token) Batch
 	batchGetOneFunc ffi.Fun
 )
 
@@ -53,9 +53,12 @@ func loadBatchFuncs(lib ffi.Lib) {
 	if batchGetOneFunc, err = lib.Prep("llama_batch_get_one", &FFITypeBatch, &ffi.TypePointer, &ffi.TypeSint32); err != nil {
 		panic(err)
 	}
-	BatchGetOne = func(tokens *Token, nTokens int32) Batch {
+	BatchGetOne = func(tokens []Token) Batch {
+		toks := unsafe.SliceData(tokens)
+		nTokens := int32(len(tokens))
+
 		var batch Batch
-		batchGetOneFunc.Call(unsafe.Pointer(&batch), unsafe.Pointer(&tokens), unsafe.Pointer(&nTokens))
+		batchGetOneFunc.Call(unsafe.Pointer(&batch), unsafe.Pointer(&toks), &nTokens)
 
 		return batch
 	}

@@ -15,7 +15,7 @@ var (
 	//                               bool   add_ass,
 	//                               char * buf,
 	//                            int32_t   length);
-	ChatApplyTemplate     func(tmpl string, chat *ChatMessage, nMsg uint32, addAss bool, buf *byte, len int32) int32
+	ChatApplyTemplate     func(tmpl string, chat []ChatMessage, addAss bool, buf []byte) int32
 	chatApplyTemplateFunc ffi.Fun
 )
 
@@ -25,11 +25,17 @@ func loadChatFuncs(lib ffi.Lib) {
 		&ffi.TypeUint8, &ffi.TypePointer, &ffi.TypeSint32); err != nil {
 		panic(err)
 	}
-	ChatApplyTemplate = func(template string, chat *ChatMessage, nMsg uint32, addAss bool, buf *byte, len int32) int32 {
-		var result ffi.Arg
+	ChatApplyTemplate = func(template string, chat []ChatMessage, addAss bool, buf []byte) int32 {
 		tmpl, _ := unix.BytePtrFromString(template)
 
-		chatApplyTemplateFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&tmpl), unsafe.Pointer(&chat), &nMsg, &addAss, unsafe.Pointer(&buf), &len)
+		c := unsafe.SliceData(chat)
+		nMsg := uint32(len(chat))
+
+		out := unsafe.SliceData(buf)
+		len := uint32(len(buf))
+
+		var result ffi.Arg
+		chatApplyTemplateFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&tmpl), unsafe.Pointer(&c), &nMsg, &addAss, unsafe.Pointer(&out), &len)
 		return int32(result)
 	}
 }
