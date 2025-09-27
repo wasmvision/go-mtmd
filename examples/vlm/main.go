@@ -73,8 +73,7 @@ func main() {
 	mtmdCtx := mtmd.InitFromFile(*projFile, model, mctxParams)
 	defer mtmd.Free(mtmdCtx)
 
-	pmpt := chatTemplate(*prompt)
-	p, _ := unix.BytePtrFromString(pmpt)
+	p, _ := unix.BytePtrFromString(chatTemplate(*prompt))
 	input := &mtmd.InputText{
 		Text:         p,
 		AddSpecial:   true,
@@ -127,7 +126,20 @@ func main() {
 }
 
 func chatTemplate(prompt string) string {
-	return fmt.Sprintf("<|im_start|>user\n%s<__media__><|im_end|>\n<|im_start|>assistant\n", prompt)
+	role, _ := unix.BytePtrFromString("user")
+	content, _ := unix.BytePtrFromString(prompt + mtmd.DefaultMarker())
+
+	chat := []llama.ChatMessage{llama.ChatMessage{Role: role, Content: content}}
+	data := make([]byte, 1024)
+	buf := unsafe.SliceData(data)
+
+	llama.ChatApplyTemplate("chatml", unsafe.SliceData(chat), 1, false, buf, int32(len(data)))
+	result := unix.BytePtrToString(buf)
+
+	// start generation
+	result += "<|im_start|>assistant\n"
+
+	return result
 }
 
 func showUsage() {
