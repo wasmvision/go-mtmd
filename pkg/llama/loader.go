@@ -9,4 +9,5 @@ func Load(lib ffi.Lib) {
 	loadVocabFuncs(lib)
 	loadSamplingFuncs(lib)
 	loadChatFuncs(lib)
+	loadLogFuncs(lib)
 }

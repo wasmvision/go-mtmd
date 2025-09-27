@@ -14,6 +14,7 @@ var (
 	modelFile *string
 	prompt    *string
 	libPath   *string
+	verbose   *bool
 )
 
 func main() {
@@ -27,6 +28,10 @@ func main() {
 
 	llama.BackendInit()
 	defer llama.BackendFree()
+
+	if !*verbose {
+		llama.LogSet(llama.LogSilent(), uintptr(0))
+	}
 
 	model := llama.ModelLoadFromFile(*modelFile, llama.ModelDefaultParams())
 	defer llama.ModelFree(model)
@@ -90,13 +95,14 @@ func main() {
 func showUsage() {
 	fmt.Println(`
 Usage:
-chat -model [model file path] -lib [llama.cpp .so file path] -prompt [what you want to ask]`)
+chat -model [model file path] -lib [llama.cpp .so file path] -prompt [what you want to ask] -v`)
 }
 
 func handleFlags() error {
 	modelFile = flag.String("model", "", "model file to use")
 	prompt = flag.String("prompt", "", "prompt")
 	libPath = flag.String("lib", "", "path to llama.cpp compiled library files")
+	verbose = flag.Bool("v", false, "verbose logging")
 
 	flag.Parse()
 
