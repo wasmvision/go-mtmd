@@ -106,13 +106,8 @@ func chatTemplate(prompt string) string {
 	chat := []llama.ChatMessage{llama.NewChatMessage("user", prompt+mtmd.DefaultMarker())}
 	buf := make([]byte, 1024)
 
-	llama.ChatApplyTemplate("chatml", chat, false, buf)
-	result := unix.BytePtrToString(unsafe.SliceData(buf))
-
-	// add to start generation
-	result += "<|im_start|>assistant\n"
-
-	return result
+	llama.ChatApplyTemplate("chatml", chat, true, buf)
+	return unix.BytePtrToString(unsafe.SliceData(buf))
 }
 
 func showUsage() {

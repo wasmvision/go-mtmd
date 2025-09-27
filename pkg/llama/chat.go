@@ -35,7 +35,9 @@ func NewChatMessage(role, content string) ChatMessage {
 	return ChatMessage{Role: r, Content: c}
 }
 
-func ChatApplyTemplate(template string, chat []ChatMessage, addAss bool, buf []byte) int32 {
+// ChatApplyTemplate applies a chat template to a slice of [ChatMessage], Set addAssistantPrompt to true to generate the
+// assistant prompt, for example on the first message.
+func ChatApplyTemplate(template string, chat []ChatMessage, addAssistantPrompt bool, buf []byte) int32 {
 	tmpl, _ := unix.BytePtrFromString(template)
 
 	c := unsafe.SliceData(chat)
@@ -45,6 +47,6 @@ func ChatApplyTemplate(template string, chat []ChatMessage, addAss bool, buf []b
 	len := uint32(len(buf))
 
 	var result ffi.Arg
-	chatApplyTemplateFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&tmpl), unsafe.Pointer(&c), &nMsg, &addAss, unsafe.Pointer(&out), &len)
+	chatApplyTemplateFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&tmpl), unsafe.Pointer(&c), &nMsg, &addAssistantPrompt, unsafe.Pointer(&out), &len)
 	return int32(result)
 }
