@@ -37,7 +37,7 @@ func main() {
 	llama.SamplerChainAdd(sampler, llama.SamplerInitGreedy())
 
 	// call once to get the size
-	count := -llama.Tokenize(vocab, *prompt, nil, true, false)
+	count := llama.Tokenize(vocab, *prompt, nil, true, false)
 
 	// now get the actual tokens
 	tokens := make([]llama.Token, count)

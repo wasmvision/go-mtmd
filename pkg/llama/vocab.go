@@ -135,6 +135,7 @@ func loadVocabFuncs(lib ffi.Lib) {
 		tokenizeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&vocab), unsafe.Pointer(&txt), &txtLen,
 			unsafe.Pointer(&toks), &nTokensMax, &addSpecial, &parseSpecial)
 
-		return int32(result)
+		// for whatever reason, llama.cpp returns a negative number.
+		return -int32(result)
 	}
 }
