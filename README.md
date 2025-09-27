@@ -1,15 +1,15 @@
 # yzma
 
-Go package that lets you call llama.cpp to perform multimodal inference using Vision Language Models (VLMs).
+yzma lets you perform multimodal inference with Vision Language Models (VLMs) by using the [`llama.cpp`](https://github.com/ggml-org/llama.cpp) libraries.
 
-Uses `purego` and `ffi` packages so CGo is not required.
+It uses the [`purego`](https://github.com/ebitengine/purego) and [`ffi`](https://github.com/JupiterRider/ffi) packages so calls can be made directly to `llama.cpp` without CGo.
 
-Still a work in progress, but is minimally functioning.
+Still a work in progress, but is already functioning.
 
 Borrows definitions from the https://github.com/dianlight/gollama.cpp package then modifies them rather heavily. Thank you!
 
 ***Important Note***
-You have to add the directory with your llama.cpp .so files to your `LD_LIBRARY_PATH` env variable:
+You have to add the directory with your llama.cpp .so files to your `LD_LIBRARY_PATH` env variable. For example:
 
 ```shell
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/ron/Development/yzma/lib

@@ -1,2 +1,2 @@
-// package yzma lets you call llama.cpp to perform multimodal inference using Vision Language Models (VLMs).
+// package yzma lets you perform multimodal inference with Vision Language Models (VLMs) by calling llama.cpp without CGo.
 package yzma
