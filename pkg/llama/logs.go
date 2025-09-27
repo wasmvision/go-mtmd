@@ -17,11 +17,11 @@ var (
 	logSilent *ffi.Closure
 )
 
-func loadLogFuncs(lib ffi.Lib) {
+func loadLogFuncs(lib ffi.Lib) error {
 	var err error
 
 	if logSetFunc, err = lib.Prep("llama_log_set", &ffi.TypeVoid, &ffi.TypePointer, &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
 	logSet = func(cb LogCallback, data uintptr) {
 		logSetFunc.Call(nil, unsafe.Pointer(&cb), unsafe.Pointer(&data))
@@ -44,6 +44,8 @@ func loadLogFuncs(lib ffi.Lib) {
 			panic(status)
 		}
 	}
+
+	return nil
 }
 
 // LogSet sets the logging mode. Pass [LogSilent()] to turn logging off. Pass nil to use stdout.

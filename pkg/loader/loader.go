@@ -7,7 +7,7 @@ import (
 	"github.com/jupiterrider/ffi"
 )
 
-func LoadLibrary(path string) ffi.Lib {
+func LoadLibrary(path string) (ffi.Lib, error) {
 	var filename string
 	switch runtime.GOOS {
 	case "linux", "freebsd":
@@ -18,10 +18,5 @@ func LoadLibrary(path string) ffi.Lib {
 		filename = filepath.Join(path, "libmtmd.dylib")
 	}
 
-	// load the library
-	lib, err := ffi.Load(filename)
-	if err != nil {
-		panic(err)
-	}
-	return lib
+	return ffi.Load(filename)
 }

@@ -18,12 +18,14 @@ var (
 	chatApplyTemplateFunc ffi.Fun
 )
 
-func loadChatFuncs(lib ffi.Lib) {
+func loadChatFuncs(lib ffi.Lib) error {
 	var err error
 	if chatApplyTemplateFunc, err = lib.Prep("llama_chat_apply_template", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypeUint32,
 		&ffi.TypeUint8, &ffi.TypePointer, &ffi.TypeSint32); err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
 func NewChatMessage(role, content string) ChatMessage {

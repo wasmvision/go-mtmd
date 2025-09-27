@@ -28,9 +28,19 @@ func main() {
 		os.Exit(0)
 	}
 
-	lib := loader.LoadLibrary(*libPath)
-	llama.Load(lib)
-	mtmd.Load(lib)
+	lib, err := loader.LoadLibrary(*libPath)
+	if err != nil {
+		fmt.Println("unable to load library", err.Error())
+		os.Exit(1)
+	}
+	if err := llama.Load(lib); err != nil {
+		fmt.Println("unable to load library", err.Error())
+		os.Exit(1)
+	}
+	if err := mtmd.Load(lib); err != nil {
+		fmt.Println("unable to load library", err.Error())
+		os.Exit(1)
+	}
 
 	llama.BackendInit()
 	defer llama.BackendFree()

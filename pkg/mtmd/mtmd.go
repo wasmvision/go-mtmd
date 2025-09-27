@@ -98,45 +98,47 @@ var (
 	helperEvalChunksFunc ffi.Fun
 )
 
-func loadFuncs(lib ffi.Lib) {
+func loadFuncs(lib ffi.Lib) error {
 	var err error
 
 	if defaultMarkerFunc, err = lib.Prep("mtmd_default_marker", &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
 
 	if contextParamsDefaultFunc, err = lib.Prep("mtmd_context_params_default", &FFITypeContextParams); err != nil {
-		panic(err)
+		return err
 	}
 
 	if initFromFileFunc, err = lib.Prep("mtmd_init_from_file", &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &FFITypeContextParams); err != nil {
-		panic(err)
+		return err
 	}
 
 	if freeFunc, err = lib.Prep("mtmd_free", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
 
 	if supportVisionFunc, err = lib.Prep("mtmd_support_vision", &ffi.TypeUint8, &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
 
 	if inputChunksInitFunc, err = lib.Prep("mtmd_input_chunks_init", &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
 
 	if inputChunksSizeFunc, err = lib.Prep("mtmd_input_chunks_size", &ffi.TypeSint32, &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
 
 	if tokenizeFunc, err = lib.Prep("mtmd_tokenize", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypeUint64); err != nil {
-		panic(err)
+		return err
 	}
 
 	if helperEvalChunksFunc, err = lib.Prep("mtmd_helper_eval_chunks", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer,
 		&ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeUint8, &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
 func DefaultMarker() string {

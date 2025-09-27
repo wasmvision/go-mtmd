@@ -25,7 +25,10 @@ func TestChat(t *testing.T) {
 }
 
 func testSetup(t *testing.T) {
-	lib := loader.LoadLibrary("../../lib")
+	lib, err := loader.LoadLibrary("../../lib")
+	if err != nil {
+		t.Fatal("unable to load libary", err.Error())
+	}
 	Load(lib)
 
 	BackendInit()

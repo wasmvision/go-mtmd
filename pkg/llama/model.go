@@ -47,44 +47,46 @@ var (
 	modelNCtxTrainFunc ffi.Fun
 )
 
-func loadModelFuncs(lib ffi.Lib) {
+func loadModelFuncs(lib ffi.Lib) error {
 	var err error
 
 	if modelDefaultParamsFunc, err = lib.Prep("llama_model_default_params", &FFITypeModelParams); err != nil {
-		panic(err)
+		return err
 	}
 
 	if modelLoadFromFileFunc, err = lib.Prep("llama_model_load_from_file", &ffi.TypePointer, &ffi.TypePointer, &FFITypeModelParams); err != nil {
-		panic(err)
+		return err
 	}
 
 	if modelFreeFunc, err = lib.Prep("llama_model_free", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
 
 	if initFromModelFunc, err = lib.Prep("llama_init_from_model", &ffi.TypePointer, &ffi.TypePointer, &FFITypeContextParams); err != nil {
-		panic(err)
+		return err
 	}
 
 	if modelChatTemplateFunc, err = lib.Prep("llama_model_chat_template", &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
 
 	if modelHasEncoderFunc, err = lib.Prep("llama_model_has_encoder", &ffi.TypeUint8, &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
 
 	if modelHasDecoderFunc, err = lib.Prep("llama_model_has_decoder", &ffi.TypeUint8, &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
 
 	if modelDecoderStartTokenFunc, err = lib.Prep("llama_model_decoder_start_token", &ffi.TypeSint32, &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
 
 	if modelNCtxTrainFunc, err = lib.Prep("llama_model_n_ctx_train", &ffi.TypeSint32, &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
 func ModelDefaultParams() ModelParams {

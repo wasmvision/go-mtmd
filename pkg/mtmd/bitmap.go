@@ -37,27 +37,29 @@ var (
 	bitmapInitFromBufFunc ffi.Fun
 )
 
-func loadBitmapFuncs(lib ffi.Lib) {
+func loadBitmapFuncs(lib ffi.Lib) error {
 	var err error
 	if bitmapInitFunc, err = lib.Prep("mtmd_bitmap_init", &ffi.TypePointer, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
 
 	if bitmapFreeFunc, err = lib.Prep("mtmd_bitmap_free", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
 
 	if bitmapGetNBytesFunc, err = lib.Prep("mtmd_bitmap_get_n_bytes", &ffi.TypeUint32, &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
 
 	if bitmapInitFromFileFunc, err = lib.Prep("mtmd_helper_bitmap_init_from_file", &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
 
 	if bitmapInitFromBufFunc, err = lib.Prep("mtmd_helper_bitmap_init_from_buf", &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
 // BitmapInit initializes a Bitmap.

@@ -29,9 +29,16 @@ func TestBitmap(t *testing.T) {
 }
 
 func testSetup(t *testing.T) {
-	lib := loader.LoadLibrary("../../lib")
-	llama.Load(lib)
-	Load(lib)
+	lib, err := loader.LoadLibrary("../../lib")
+	if err != nil {
+		t.Fatal("unable to load libary", err.Error())
+	}
+	if err := llama.Load(lib); err != nil {
+		t.Fatal("unable to load libary", err.Error())
+	}
+	if err := Load(lib); err != nil {
+		t.Fatal("unable to load libary", err.Error())
+	}
 
 	llama.BackendInit()
 }

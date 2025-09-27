@@ -27,20 +27,22 @@ var (
 	batchGetOneFunc ffi.Fun
 )
 
-func loadBatchFuncs(lib ffi.Lib) {
+func loadBatchFuncs(lib ffi.Lib) error {
 	var err error
 
 	if batchInitFunc, err = lib.Prep("llama_batch_init", &FFITypeBatch, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32); err != nil {
-		panic(err)
+		return err
 	}
 
 	if batchFreeFunc, err = lib.Prep("llama_batch_free", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
-		panic(err)
+		return err
 	}
 
 	if batchGetOneFunc, err = lib.Prep("llama_batch_get_one", &FFITypeBatch, &ffi.TypePointer, &ffi.TypeSint32); err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
 func BatchInit(nTokens int32, embd int32, nSeqMax int32) Batch {
