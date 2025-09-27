@@ -1,6 +1,6 @@
 # yzma
 
-yzma lets you perform multimodal inference with Vision Language Models (VLMs) by using the [`llama.cpp`](https://github.com/ggml-org/llama.cpp) libraries.
+yzma lets you perform multimodal inference with Vision Language Models (VLMs) on your own hardware by using the [`llama.cpp`](https://github.com/ggml-org/llama.cpp) libraries.
 
 It uses the [`purego`](https://github.com/ebitengine/purego) and [`ffi`](https://github.com/JupiterRider/ffi) packages so calls can be made directly to `llama.cpp` without CGo.
 

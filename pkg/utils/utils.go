@@ -110,7 +110,7 @@ func Warmup(lctx llama.Context, model llama.Model) {
 	}
 
 	if llama.ModelHasEncoder(model) {
-		batch := llama.BatchGetOne(unsafe.SliceData(tokens), int32(len(tokens)))
+		batch := llama.BatchGetOne(tokens)
 		llama.Encode(lctx, batch)
 
 		start := llama.ModelDecoderStartToken(model)
@@ -121,7 +121,7 @@ func Warmup(lctx llama.Context, model llama.Model) {
 	}
 
 	if llama.ModelHasDecoder(model) {
-		batch := llama.BatchGetOne(unsafe.SliceData(tokens), int32(len(tokens)))
+		batch := llama.BatchGetOne(tokens)
 		llama.Decode(lctx, batch)
 	}
 

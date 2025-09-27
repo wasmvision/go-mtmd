@@ -73,21 +73,13 @@ func main() {
 	mtmdCtx := mtmd.InitFromFile(*projFile, model, mctxParams)
 	defer mtmd.Free(mtmdCtx)
 
-	p, _ := unix.BytePtrFromString(chatTemplate(*prompt))
-	input := &mtmd.InputText{
-		Text:         p,
-		AddSpecial:   true,
-		ParseSpecial: true,
-	}
-
+	input := mtmd.NewInputText(chatTemplate(*prompt), true, true)
 	output := mtmd.InputChunksInit()
 
 	bitmap := mtmd.BitmapInitFromFile(mtmdCtx, *imageFile)
 	defer mtmd.BitmapFree(bitmap)
 
-	bitmaps := []mtmd.Bitmap{bitmap}
-	bt := unsafe.SliceData(bitmaps)
-	mtmd.Tokenize(mtmdCtx, output, input, bt, 1)
+	mtmd.Tokenize(mtmdCtx, output, input, []mtmd.Bitmap{bitmap})
 
 	var n llama.Pos
 	mtmd.HelperEvalChunks(mtmdCtx, lctx, output, 0, 0, int32(ctxParams.NBatch), true, &n)
@@ -105,12 +97,10 @@ func main() {
 			break
 		}
 
-		data := make([]byte, 36)
-		buf := unsafe.SliceData(data)
-		llama.TokenToPiece(vocab, token, buf, 36, 0, true)
+		buf := make([]byte, 128)
+		llama.TokenToPiece(vocab, token, buf, 0, true)
 
-		res := unix.BytePtrToString(buf)
-		fmt.Print(res)
+		fmt.Print(string(buf))
 
 		batch.NTokens = 1
 		batch.Token = &token
@@ -130,11 +120,10 @@ func chatTemplate(prompt string) string {
 	content, _ := unix.BytePtrFromString(prompt + mtmd.DefaultMarker())
 
 	chat := []llama.ChatMessage{llama.ChatMessage{Role: role, Content: content}}
-	data := make([]byte, 1024)
-	buf := unsafe.SliceData(data)
+	buf := make([]byte, 1024)
 
-	llama.ChatApplyTemplate("chatml", unsafe.SliceData(chat), 1, false, buf, int32(len(data)))
-	result := unix.BytePtrToString(buf)
+	llama.ChatApplyTemplate("chatml", chat, false, buf)
+	result := unix.BytePtrToString(unsafe.SliceData(buf))
 
 	// start generation
 	result += "<|im_start|>assistant\n"

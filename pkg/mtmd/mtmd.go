@@ -92,7 +92,7 @@ var (
 	//                            const mtmd_input_text * text,
 	//                            const mtmd_bitmap ** bitmaps,
 	//                            size_t n_bitmaps);
-	Tokenize     func(ctx Context, out InputChunks, text *InputText, bitmaps *Bitmap, nBitmaps uint64) int32
+	Tokenize     func(ctx Context, out InputChunks, text *InputText, bitmaps []Bitmap) int32
 	tokenizeFunc ffi.Fun
 
 	// MTMD_API int32_t mtmd_helper_eval_chunks(mtmd_context * ctx,
@@ -178,9 +178,12 @@ func loadFuncs(lib ffi.Lib) {
 	if tokenizeFunc, err = lib.Prep("mtmd_tokenize", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypeUint64); err != nil {
 		panic(err)
 	}
-	Tokenize = func(ctx Context, out InputChunks, text *InputText, bitmaps *Bitmap, nBitmaps uint64) int32 {
+	Tokenize = func(ctx Context, out InputChunks, text *InputText, bitmaps []Bitmap) int32 {
+		bt := unsafe.SliceData(bitmaps)
+		nBitmaps := uint64(len(bitmaps))
+
 		var result ffi.Arg
-		tokenizeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&ctx), unsafe.Pointer(&out), unsafe.Pointer(&text), unsafe.Pointer(&bitmaps), unsafe.Pointer(&nBitmaps))
+		tokenizeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&ctx), unsafe.Pointer(&out), unsafe.Pointer(&text), unsafe.Pointer(&bt), unsafe.Pointer(&nBitmaps))
 
 		return int32(result)
 	}
@@ -195,5 +198,16 @@ func loadFuncs(lib ffi.Lib) {
 			unsafe.Pointer(&nBatch), unsafe.Pointer(&logitsLast), unsafe.Pointer(&newNPast))
 
 		return int32(result)
+	}
+}
+
+func NewInputText(text string, addSpecial, parseSpecial bool) *InputText {
+	// p, _ := unix.BytePtrFromString(text)
+	text += "\x00"
+	p := unsafe.StringData(text)
+	return &InputText{
+		Text:         p,
+		AddSpecial:   addSpecial,
+		ParseSpecial: parseSpecial,
 	}
 }
