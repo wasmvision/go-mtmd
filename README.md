@@ -8,8 +8,16 @@ Still a work in progress but it is already functioning.
 
 Borrows definitions from the https://github.com/dianlight/gollama.cpp package then modifies them rather heavily. Thank you!
 
+## Installation
+
+You will need to download the `llama.cpp` libraries for your platform. You can obtain them from https://github.com/ggml-org/llama.cpp/releases
+
+Extract the library files into a directory on local machine.
+
+For Linux, they have the `.so` file extension. For example, `libllama.so`, `libmtmd.so` and so on. When using macOS, they have a `.dylib` file extension. And on Windows, they have a `.dll` file extension. You do not need the other downloaded files to use the `llama.cpp` libraries with `yzma`.
+
 ***Important Note***
-You have to add the directory with your llama.cpp .so files to your `LD_LIBRARY_PATH` env variable. For example:
+You will need to add the directory with your llama.cpp library files to your `LD_LIBRARY_PATH` env variable. For example:
 
 ```shell
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/ron/Development/yzma/lib
