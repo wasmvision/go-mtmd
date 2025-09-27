@@ -35,10 +35,8 @@ func main() {
 	llama.BackendInit()
 	defer llama.BackendFree()
 
-	params := llama.ModelDefaultParams()
-
 	fmt.Println("Loading model", *modelFile)
-	model := llama.ModelLoadFromFile(*modelFile, params)
+	model := llama.ModelLoadFromFile(*modelFile, llama.ModelDefaultParams())
 	defer llama.ModelFree(model)
 
 	ctxParams := llama.ContextDefaultParams()
@@ -63,14 +61,7 @@ func main() {
 		llama.SamplerTypeTemperature,
 	})
 
-	// fmt.Println("warming up")
-	// utils.Warmup(lctx, model, vocab)
-
-	mctxParams := mtmd.ContextParamsDefault()
-	// mctxParams.UseGPU = true
-	// mctxParams.Verbosity = llama.LogLevel(1)
-
-	mtmdCtx := mtmd.InitFromFile(*projFile, model, mctxParams)
+	mtmdCtx := mtmd.InitFromFile(*projFile, model, mtmd.ContextParamsDefault())
 	defer mtmd.Free(mtmdCtx)
 
 	input := mtmd.NewInputText(chatTemplate(*prompt), true, true)
@@ -84,7 +75,12 @@ func main() {
 	var n llama.Pos
 	mtmd.HelperEvalChunks(mtmdCtx, lctx, output, 0, 0, int32(ctxParams.NBatch), true, &n)
 
+	var sz int32 = 1
 	batch := llama.BatchInit(1, 0, 1)
+	batch.NSeqId = &sz
+	batch.NTokens = 1
+	seqs := unsafe.SliceData([]llama.SeqId{0})
+	batch.SeqId = &seqs
 
 	fmt.Println()
 
@@ -102,13 +98,8 @@ func main() {
 
 		fmt.Print(string(buf))
 
-		batch.NTokens = 1
 		batch.Token = &token
 		batch.Pos = &n
-		var sz int32 = 1
-		batch.NSeqId = &sz
-		seqs := unsafe.SliceData([]llama.SeqId{0})
-		batch.SeqId = &seqs
 
 		llama.Decode(lctx, batch)
 		n++
