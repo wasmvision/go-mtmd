@@ -4,13 +4,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"math"
 	"os"
 	"unsafe"
 
 	"github.com/wasmvision/yzma/pkg/llama"
 	"github.com/wasmvision/yzma/pkg/loader"
 	"github.com/wasmvision/yzma/pkg/mtmd"
+	"github.com/wasmvision/yzma/pkg/utils"
 	"golang.org/x/sys/unix"
 )
 
@@ -49,7 +49,19 @@ func main() {
 	defer llama.Free(lctx)
 
 	vocab := llama.ModelGetVocab(model)
-	sampler := setupSampler(model, vocab)
+
+	// add default samplers
+	sampler := utils.NewSampler(model, []llama.SamplerType{
+		llama.SamplerTypePenalties,
+		llama.SamplerTypeDry,
+		llama.SamplerTypeTopNSigma,
+		llama.SamplerTypeTopK,
+		llama.SamplerTypeTypicalP,
+		llama.SamplerTypeTopP,
+		llama.SamplerTypeMinP,
+		llama.SamplerTypeXTC,
+		llama.SamplerTypeTemperature,
+	})
 
 	// fmt.Println("warming up")
 	// utils.Warmup(lctx, model, vocab)
@@ -90,7 +102,6 @@ func main() {
 		llama.SamplerAccept(sampler, token)
 
 		if llama.VocabIsEOG(vocab, token) {
-			// end of generation
 			fmt.Println()
 			break
 		}
@@ -117,69 +128,6 @@ func main() {
 
 func chatTemplate(prompt string) string {
 	return fmt.Sprintf("<|im_start|>user\n%s<__media__><|im_end|>\n<|im_start|>assistant\n", prompt)
-}
-
-func setupSampler(model llama.Model, vocab llama.Vocab) llama.Sampler {
-	params := llama.SamplerChainDefaultParams()
-	sampler := llama.SamplerChainInit(params)
-
-	logitBiasEOG := make([]llama.LogitBias, 0)
-	nTokens := llama.VocabNTokens(vocab)
-
-	for i := int32(0); i < nTokens; i++ {
-		token := llama.Token(i)
-		if llama.VocabIsEOG(vocab, token) {
-			logitBiasEOG = append(logitBiasEOG, llama.LogitBias{Token: token, Bias: math.SmallestNonzeroFloat32})
-		}
-	}
-
-	bias := llama.SamplerInitLogitBias(nTokens, int32(len(logitBiasEOG)), unsafe.SliceData(logitBiasEOG))
-	llama.SamplerChainAdd(sampler, bias)
-
-	// defaults: penalties;dry;top_n_sigma;top_k;typ_p;top_p;min_p;xtc;temperature
-	penalties := llama.SamplerInitPenalties(64, 1.0, 0, 0)
-	llama.SamplerChainAdd(sampler, penalties)
-
-	seqBreakers := []string{"\n", ":", "\"", "*"}
-	var combined []*byte
-	for _, s := range seqBreakers {
-		ptr, err := unix.BytePtrFromString(s)
-		if err != nil {
-			panic(err)
-		}
-		combined = append(combined, ptr)
-	}
-	seqBreakersPtr := unsafe.SliceData(combined)
-
-	dry := llama.SamplerInitDry(vocab, llama.ModelNCtxTrain(model), 0, 1.75, 2, 4096, seqBreakersPtr, uint32(len(seqBreakers)))
-	llama.SamplerChainAdd(sampler, dry)
-
-	topNSigma := llama.SamplerInitTopNSigma(-1.0)
-	llama.SamplerChainAdd(sampler, topNSigma)
-
-	topK := llama.SamplerInitTopK(40)
-	llama.SamplerChainAdd(sampler, topK)
-
-	typical := llama.SamplerInitTypical(1.0, 0)
-	llama.SamplerChainAdd(sampler, typical)
-
-	topP := llama.SamplerInitTopP(0.95, 0)
-	llama.SamplerChainAdd(sampler, topP)
-
-	minP := llama.SamplerInitMinP(0.05, 0)
-	llama.SamplerChainAdd(sampler, minP)
-
-	xtc := llama.SamplerInitXTC(0, 0.1, 0, llama.DEFAULT_SEED)
-	llama.SamplerChainAdd(sampler, xtc)
-
-	temp := llama.SamplerInitTempExt(0.2, 0, 1.0)
-	llama.SamplerChainAdd(sampler, temp)
-
-	// add this last
-	dist := llama.SamplerInitDist(llama.DEFAULT_SEED)
-	llama.SamplerChainAdd(sampler, dist)
-
-	return sampler
 }
 
 func showUsage() {

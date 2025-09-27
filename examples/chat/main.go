@@ -30,22 +30,23 @@ func main() {
 	llama.BackendInit()
 	defer llama.BackendFree()
 
-	params := llama.ModelDefaultParams()
-	model := llama.ModelLoadFromFile(*modelFile, params)
+	model := llama.ModelLoadFromFile(*modelFile, llama.ModelDefaultParams())
 	defer llama.ModelFree(model)
 
 	vocab := llama.ModelGetVocab(model)
-	sampler := setupSampler(model, vocab)
+
+	sampler := llama.SamplerChainInit(llama.SamplerChainDefaultParams())
+	llama.SamplerChainAdd(sampler, llama.SamplerInitGreedy())
 
 	p, _ := unix.BytePtrFromString(*prompt)
-	count := llama.Tokenize(vocab, p, int32(len(*prompt)), nil, 0, true, false)
+	count := -llama.Tokenize(vocab, p, int32(len(*prompt)), nil, 0, true, false)
 
-	tokens := make([]llama.Token, -count)
-	llama.Tokenize(vocab, p, int32(len(*prompt)), unsafe.SliceData(tokens), -count, true, false)
+	tokens := make([]llama.Token, count)
+	llama.Tokenize(vocab, p, int32(len(*prompt)), unsafe.SliceData(tokens), count, true, false)
 
 	ctxParams := llama.ContextDefaultParams()
-	ctxParams.NCtx = uint32(-count + 32)
-	ctxParams.NBatch = uint32(-count)
+	ctxParams.NCtx = uint32(count + 32)
+	ctxParams.NBatch = uint32(count)
 
 	lctx := llama.InitFromModel(model, ctxParams)
 	defer llama.Free(lctx)
@@ -72,14 +73,13 @@ func main() {
 		llama.SamplerAccept(sampler, token)
 
 		if llama.VocabIsEOG(vocab, token) {
-			// end of generation
 			fmt.Println()
 			break
 		}
 
 		data := make([]byte, 36)
 		buf := unsafe.SliceData(data)
-		llama.TokenToPiece(vocab, token, buf, 36, 0, true)
+		llama.TokenToPiece(vocab, token, buf, int32(len(data)), 0, true)
 
 		res := unix.BytePtrToString(buf)
 		fmt.Print(res)
@@ -88,15 +88,6 @@ func main() {
 	}
 
 	fmt.Println()
-}
-
-func setupSampler(model llama.Model, vocab llama.Vocab) llama.Sampler {
-	params := llama.SamplerChainDefaultParams()
-	sampler := llama.SamplerChainInit(params)
-
-	llama.SamplerChainAdd(sampler, llama.SamplerInitGreedy())
-
-	return sampler
 }
 
 func showUsage() {

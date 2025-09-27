@@ -6,6 +6,22 @@ import (
 	"github.com/jupiterrider/ffi"
 )
 
+type SamplerType int32
+
+const (
+	SamplerTypeNone        SamplerType = iota
+	SamplerTypeDry                     = 1
+	SamplerTypeTopK                    = 2
+	SamplerTypeTopP                    = 3
+	SamplerTypeMinP                    = 4
+	SamplerTypeTypicalP                = 6
+	SamplerTypeTemperature             = 7
+	SamplerTypeXTC                     = 8
+	SamplerTypeInfill                  = 9
+	SamplerTypePenalties               = 10
+	SamplerTypeTopNSigma               = 11
+)
+
 type Sampler uintptr
 
 var (
