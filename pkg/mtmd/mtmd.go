@@ -58,33 +58,26 @@ var (
 
 var (
 	// MTMD_API const char * mtmd_default_marker(void);
-	DefaultMarker     func() string
 	defaultMarkerFunc ffi.Fun
 
 	// MTMD_API struct mtmd_context_params mtmd_context_params_default(void);
-	ContextParamsDefault     func() ContextParamsType
 	contextParamsDefaultFunc ffi.Fun
 
 	// MTMD_API mtmd_context * mtmd_init_from_file(const char * mmproj_fname,
 	//                                         const struct llama_model * text_model,
 	//                                         const struct mtmd_context_params ctx_params);
-	InitFromFile     func(mmprojFname string, model llama.Model, ctxParams ContextParamsType) Context
 	initFromFileFunc ffi.Fun
 
 	// MTMD_API void mtmd_free(mtmd_context * ctx);
-	Free     func(ctx Context)
 	freeFunc ffi.Fun
 
 	// MTMD_API bool mtmd_support_vision(mtmd_context * ctx);
-	SupportVision     func(ctx Context) bool
 	supportVisionFunc ffi.Fun
 
 	// MTMD_API mtmd_input_chunks *      mtmd_input_chunks_init(void);
-	InputChunksInit     func() InputChunks
 	inputChunksInitFunc ffi.Fun
 
 	// MTMD_API size_t mtmd_input_chunks_size(const mtmd_input_chunks * chunks);
-	InputChunksSize     func(chunks InputChunks) uint32
 	inputChunksSizeFunc ffi.Fun
 
 	// MTMD_API int32_t mtmd_tokenize(mtmd_context * ctx,
@@ -92,7 +85,6 @@ var (
 	//                            const mtmd_input_text * text,
 	//                            const mtmd_bitmap ** bitmaps,
 	//                            size_t n_bitmaps);
-	Tokenize     func(ctx Context, out InputChunks, text *InputText, bitmaps []Bitmap) int32
 	tokenizeFunc ffi.Fun
 
 	// MTMD_API int32_t mtmd_helper_eval_chunks(mtmd_context * ctx,
@@ -103,7 +95,6 @@ var (
 	//                                          int32_t n_batch,
 	//                                          bool logits_last,
 	//                                          llama_pos * new_n_past);
-	HelperEvalChunks     func(ctx Context, lctx llama.Context, chunks InputChunks, nPast llama.Pos, seqID llama.SeqId, nBatch int32, logitsLast bool, newNPast *llama.Pos) int32
 	helperEvalChunksFunc ffi.Fun
 )
 
@@ -113,92 +104,93 @@ func loadFuncs(lib ffi.Lib) {
 	if defaultMarkerFunc, err = lib.Prep("mtmd_default_marker", &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-	DefaultMarker = func() string {
-		var marker *byte
-		defaultMarkerFunc.Call(unsafe.Pointer(&marker))
-		return unix.BytePtrToString(marker)
-	}
 
 	if contextParamsDefaultFunc, err = lib.Prep("mtmd_context_params_default", &FFITypeContextParams); err != nil {
 		panic(err)
-	}
-	ContextParamsDefault = func() ContextParamsType {
-		var ctx ContextParamsType
-		contextParamsDefaultFunc.Call(unsafe.Pointer(&ctx))
-		return ctx
 	}
 
 	if initFromFileFunc, err = lib.Prep("mtmd_init_from_file", &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &FFITypeContextParams); err != nil {
 		panic(err)
 	}
-	InitFromFile = func(mmprojFname string, model llama.Model, ctxParams ContextParamsType) Context {
-		var ctx Context
-		file := &[]byte(mmprojFname + "\x00")[0]
-		initFromFileFunc.Call(unsafe.Pointer(&ctx), unsafe.Pointer(&file), unsafe.Pointer(&model), unsafe.Pointer(&ctxParams))
-		return ctx
-	}
 
 	if freeFunc, err = lib.Prep("mtmd_free", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
 		panic(err)
-	}
-	Free = func(ctx Context) {
-		freeFunc.Call(nil, unsafe.Pointer(&ctx))
 	}
 
 	if supportVisionFunc, err = lib.Prep("mtmd_support_vision", &ffi.TypeUint8, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-	SupportVision = func(ctx Context) bool {
-		var result ffi.Arg
-		supportVisionFunc.Call(&result, unsafe.Pointer(&ctx))
-
-		return result.Bool()
-	}
 
 	if inputChunksInitFunc, err = lib.Prep("mtmd_input_chunks_init", &ffi.TypePointer); err != nil {
 		panic(err)
-	}
-	InputChunksInit = func() InputChunks {
-		var chunks InputChunks
-		inputChunksInitFunc.Call(unsafe.Pointer(&chunks))
-
-		return chunks
 	}
 
 	if inputChunksSizeFunc, err = lib.Prep("mtmd_input_chunks_size", &ffi.TypeSint32, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-	InputChunksSize = func(chunks InputChunks) uint32 {
-		var result ffi.Arg
-		inputChunksSizeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&chunks))
-
-		return uint32(result)
-	}
 
 	if tokenizeFunc, err = lib.Prep("mtmd_tokenize", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypeUint64); err != nil {
 		panic(err)
-	}
-	Tokenize = func(ctx Context, out InputChunks, text *InputText, bitmaps []Bitmap) int32 {
-		bt := unsafe.SliceData(bitmaps)
-		nBitmaps := uint64(len(bitmaps))
-
-		var result ffi.Arg
-		tokenizeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&ctx), unsafe.Pointer(&out), unsafe.Pointer(&text), unsafe.Pointer(&bt), unsafe.Pointer(&nBitmaps))
-
-		return int32(result)
 	}
 
 	if helperEvalChunksFunc, err = lib.Prep("mtmd_helper_eval_chunks", &ffi.TypeSint32, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer,
 		&ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeSint32, &ffi.TypeUint8, &ffi.TypePointer); err != nil {
 		panic(err)
 	}
-	HelperEvalChunks = func(ctx Context, lctx llama.Context, chunks InputChunks, nPast llama.Pos, seqID llama.SeqId, nBatch int32, logitsLast bool, newNPast *llama.Pos) int32 {
-		var result ffi.Arg
-		helperEvalChunksFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&ctx), unsafe.Pointer(&lctx), unsafe.Pointer(&chunks), unsafe.Pointer(&nPast), unsafe.Pointer(&seqID),
-			unsafe.Pointer(&nBatch), unsafe.Pointer(&logitsLast), unsafe.Pointer(&newNPast))
+}
 
-		return int32(result)
-	}
+func DefaultMarker() string {
+	var marker *byte
+	defaultMarkerFunc.Call(unsafe.Pointer(&marker))
+	return unix.BytePtrToString(marker)
+}
+
+func ContextParamsDefault() ContextParamsType {
+	var ctx ContextParamsType
+	contextParamsDefaultFunc.Call(unsafe.Pointer(&ctx))
+	return ctx
+}
+
+func InitFromFile(mmprojFname string, model llama.Model, ctxParams ContextParamsType) Context {
+	var ctx Context
+	file := &[]byte(mmprojFname + "\x00")[0]
+	initFromFileFunc.Call(unsafe.Pointer(&ctx), unsafe.Pointer(&file), unsafe.Pointer(&model), unsafe.Pointer(&ctxParams))
+	return ctx
+}
+
+func Free(ctx Context) {
+	freeFunc.Call(nil, unsafe.Pointer(&ctx))
+}
+
+func SupportVision(ctx Context) bool {
+	var result ffi.Arg
+	supportVisionFunc.Call(&result, unsafe.Pointer(&ctx))
+
+	return result.Bool()
+}
+
+func InputChunksInit() InputChunks {
+	var chunks InputChunks
+	inputChunksInitFunc.Call(unsafe.Pointer(&chunks))
+
+	return chunks
+}
+
+func InputChunksSize(chunks InputChunks) uint32 {
+	var result ffi.Arg
+	inputChunksSizeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&chunks))
+
+	return uint32(result)
+}
+
+func Tokenize(ctx Context, out InputChunks, text *InputText, bitmaps []Bitmap) int32 {
+	bt := unsafe.SliceData(bitmaps)
+	nBitmaps := uint64(len(bitmaps))
+
+	var result ffi.Arg
+	tokenizeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&ctx), unsafe.Pointer(&out), unsafe.Pointer(&text), unsafe.Pointer(&bt), unsafe.Pointer(&nBitmaps))
+
+	return int32(result)
 }
 
 func NewInputText(text string, addSpecial, parseSpecial bool) *InputText {
@@ -210,4 +202,12 @@ func NewInputText(text string, addSpecial, parseSpecial bool) *InputText {
 		AddSpecial:   addSpecial,
 		ParseSpecial: parseSpecial,
 	}
+}
+
+func HelperEvalChunks(ctx Context, lctx llama.Context, chunks InputChunks, nPast llama.Pos, seqID llama.SeqId, nBatch int32, logitsLast bool, newNPast *llama.Pos) int32 {
+	var result ffi.Arg
+	helperEvalChunksFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&ctx), unsafe.Pointer(&lctx), unsafe.Pointer(&chunks), unsafe.Pointer(&nPast), unsafe.Pointer(&seqID),
+		unsafe.Pointer(&nBatch), unsafe.Pointer(&logitsLast), unsafe.Pointer(&newNPast))
+
+	return int32(result)
 }
