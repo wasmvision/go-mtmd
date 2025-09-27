@@ -20,14 +20,14 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/ron/Development/yzma/lib
 ### VLM example
 
 ```shell
-$ go run ./examples/vlm/ -model ./models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf -proj ./models/mmproj-Qwen2.5-VL-3B-Instruct-Q8_0.gguf -lib ./lib -image ./images/roneye_400x400.jpg -prompt "What is in this picture?" 2>/dev/null
+$ go run ./examples/vlm/ -model ./models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf -proj ./models/mmproj-Qwen2.5-VL-3B-Instruct-Q8_0.gguf -lib ./lib -image ./images/domestic_llama.jpg -prompt "What is in this picture?" 2>/dev/null
 Loading model ./models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf
 encoding image slice...
-image slice encoded in 172 ms
-decoding image batch 1/1, n_tokens_batch = 225
-image decoded (batch 1/1) in 32 ms
+image slice encoded in 966 ms
+decoding image batch 1/1, n_tokens_batch = 910
+image decoded (batch 1/1) in 208 ms
 
-The picture shows a close-up of a person's eye.
+The picture shows a white llama standing in a fenced-in area, possibly a zoo or a wildlife park. The llama is the main focus of the image, and it appears to be looking to the right. The background features a grassy area with trees and a fence, and there are some vehicles visible in the distance.
 ```
 
 ### Chat example
