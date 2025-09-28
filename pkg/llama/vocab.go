@@ -20,6 +20,9 @@ var (
 	// LLAMA_API bool llama_vocab_is_eog(const struct llama_vocab * vocab, llama_token token);
 	vocabIsEOGFunc ffi.Fun
 
+	// LLAMA_API bool llama_vocab_is_control(const struct llama_vocab * vocab, llama_token token);
+	vocabIsControlFunc ffi.Fun
+
 	// LLAMA_API int32_t llama_vocab_n_tokens(const struct llama_vocab * vocab);
 	vocabNTokensFunc ffi.Fun
 
@@ -58,6 +61,10 @@ func loadVocabFuncs(lib ffi.Lib) error {
 	}
 
 	if vocabIsEOGFunc, err = lib.Prep("llama_vocab_is_eog", &ffi.TypeUint8, &ffi.TypePointer, &ffi.TypeSint32); err != nil {
+		return err
+	}
+
+	if vocabIsControlFunc, err = lib.Prep("llama_vocab_is_control", &ffi.TypeUint8, &ffi.TypePointer, &ffi.TypeSint32); err != nil {
 		return err
 	}
 
@@ -101,6 +108,13 @@ func VocabEOS(vocab Vocab) Token {
 func VocabIsEOG(vocab Vocab, token Token) bool {
 	var result ffi.Arg
 	vocabIsEOGFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&vocab), unsafe.Pointer(&token))
+
+	return result.Bool()
+}
+
+func VocabIsControl(vocab Vocab, token Token) bool {
+	var result ffi.Arg
+	vocabIsControlFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&vocab), unsafe.Pointer(&token))
 
 	return result.Bool()
 }

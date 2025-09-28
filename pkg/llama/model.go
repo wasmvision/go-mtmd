@@ -115,7 +115,10 @@ func InitFromModel(model Model, params ContextParams) Context {
 
 func ModelChatTemplate(model Model, name string) string {
 	var template *byte
-	n := &[]byte(name + "\x00")[0]
+	var n *byte
+	if len(name) > 0 {
+		n = &[]byte(name + "\x00")[0]
+	}
 	modelChatTemplateFunc.Call(unsafe.Pointer(&template), unsafe.Pointer(&model), unsafe.Pointer(&n))
 
 	return unix.BytePtrToString(template)
