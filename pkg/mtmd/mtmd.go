@@ -153,6 +153,8 @@ func ContextParamsDefault() ContextParamsType {
 	return ctx
 }
 
+// InitFromFile initializes the mtmd context. mmprojFname is a projector file. model is a model that has already been opened.
+// ctxParams are the ContextParamsType for the new Context.
 func InitFromFile(mmprojFname string, model llama.Model, ctxParams ContextParamsType) Context {
 	var ctx Context
 	file := &[]byte(mmprojFname + "\x00")[0]
@@ -160,10 +162,12 @@ func InitFromFile(mmprojFname string, model llama.Model, ctxParams ContextParams
 	return ctx
 }
 
+// Free frees a Context that has already been created using InitFromFile.
 func Free(ctx Context) {
 	freeFunc.Call(nil, unsafe.Pointer(&ctx))
 }
 
+// SupportVision returns whether the current model supports vision input.
 func SupportVision(ctx Context) bool {
 	var result ffi.Arg
 	supportVisionFunc.Call(&result, unsafe.Pointer(&ctx))
@@ -185,6 +189,25 @@ func InputChunksSize(chunks InputChunks) uint32 {
 	return uint32(result)
 }
 
+// Tokenize an input text prompt and a list of bitmaps (images/audio)
+// the prompt must have the input image marker (default: "<__media__>") in it
+// the default marker is defined by mtmd_default_marker()
+// the marker will be replaced with the image/audio chunk
+// for example:
+//
+//	"here is an image: <__media__>\ndescribe it in detail."
+//	this will gives 3 chunks:
+//	1. "here is an image: <start_of_image>"
+//	2. (image/audio tokens)
+//	3. "<end_of_image>\ndescribe it in detail."
+//
+// number of bitmaps must be equal to the number of markers in the prompt
+// this function is thread-safe (shared ctx)
+// return values:
+//
+//	0 on success
+//	1 on number of bitmaps not matching the number of markers
+//	2 on image preprocessing error
 func Tokenize(ctx Context, out InputChunks, text *InputText, bitmaps []Bitmap) int32 {
 	bt := unsafe.SliceData(bitmaps)
 	nBitmaps := uint64(len(bitmaps))
@@ -195,8 +218,8 @@ func Tokenize(ctx Context, out InputChunks, text *InputText, bitmaps []Bitmap) i
 	return int32(result)
 }
 
+// NewInputText create a new InputText to be used for calling Tokenize.
 func NewInputText(text string, addSpecial, parseSpecial bool) *InputText {
-	// p, _ := unix.BytePtrFromString(text)
 	text += "\x00"
 	p := unsafe.StringData(text)
 	return &InputText{
@@ -206,6 +229,12 @@ func NewInputText(text string, addSpecial, parseSpecial bool) *InputText {
 	}
 }
 
+// HelperEvalChunks is a helper function that automatically:
+// 1. run llama.Decode() on text chunks
+// 2. run mtmd.Encode() on image chunks, then mtmd.GetOutputEmbd() and then llama.Decode()
+// if any of the mtmd.Encode() or llama.Decode() calls return non-zero, stop and forward the error
+// otherwise, returns 0 on success
+// this function is NOT thread-safe
 func HelperEvalChunks(ctx Context, lctx llama.Context, chunks InputChunks, nPast llama.Pos, seqID llama.SeqId, nBatch int32, logitsLast bool, newNPast *llama.Pos) int32 {
 	var result ffi.Arg
 	helperEvalChunksFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&ctx), unsafe.Pointer(&lctx), unsafe.Pointer(&chunks), unsafe.Pointer(&nPast), unsafe.Pointer(&seqID),

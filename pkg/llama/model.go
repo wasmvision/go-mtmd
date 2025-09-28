@@ -89,12 +89,14 @@ func loadModelFuncs(lib ffi.Lib) error {
 	return nil
 }
 
+// ModelDefaultParams returns default parameters for loading a Model.
 func ModelDefaultParams() ModelParams {
 	var p ModelParams
 	modelDefaultParamsFunc.Call(unsafe.Pointer(&p))
 	return p
 }
 
+// ModelLoadFromFile loads a Model from a GGUF file.
 func ModelLoadFromFile(pathModel string, params ModelParams) Model {
 	var model Model
 	file := &[]byte(pathModel + "\x00")[0]
@@ -102,10 +104,12 @@ func ModelLoadFromFile(pathModel string, params ModelParams) Model {
 	return model
 }
 
+// ModelFree frees a previously opened model.
 func ModelFree(model Model) {
 	modelFreeFunc.Call(nil, unsafe.Pointer(&model))
 }
 
+// InitFromModel initializes a previously loaded Model, and then returns a new Context.
 func InitFromModel(model Model, params ContextParams) Context {
 	var ctx Context
 	initFromModelFunc.Call(unsafe.Pointer(&ctx), unsafe.Pointer(&model), unsafe.Pointer(&params))
@@ -113,6 +117,7 @@ func InitFromModel(model Model, params ContextParams) Context {
 	return ctx
 }
 
+// ModelChatTemplate returns a named chat template for the Model.
 func ModelChatTemplate(model Model, name string) string {
 	var template *byte
 	var n *byte
@@ -124,6 +129,7 @@ func ModelChatTemplate(model Model, name string) string {
 	return unix.BytePtrToString(template)
 }
 
+// ModelHasEncoder returns if the Model has an encoder.
 func ModelHasEncoder(model Model) bool {
 	var result ffi.Arg
 	modelHasEncoderFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&model))
@@ -131,6 +137,7 @@ func ModelHasEncoder(model Model) bool {
 	return result.Bool()
 }
 
+// ModelHasDecoder returns if the Model has an decoder.
 func ModelHasDecoder(model Model) bool {
 	var result ffi.Arg
 	modelHasDecoderFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&model))
@@ -138,6 +145,7 @@ func ModelHasDecoder(model Model) bool {
 	return result.Bool()
 }
 
+// ModelDecoderStartToken returns the start Token for the Model's decoder.
 func ModelDecoderStartToken(model Model) Token {
 	var result ffi.Arg
 	modelDecoderStartTokenFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&model))

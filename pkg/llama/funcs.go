@@ -113,10 +113,12 @@ func loadFuncs(lib ffi.Lib) error {
 	return nil
 }
 
+// BackendInit initializes the llama.cpp back-end.
 func BackendInit() {
 	backendInitFunc.Call(nil)
 }
 
+// BackendFree frees the llama.cpp back-end.
 func BackendFree() {
 	backendFreeFunc.Call(nil)
 }

@@ -28,6 +28,7 @@ func loadChatFuncs(lib ffi.Lib) error {
 	return nil
 }
 
+// NewChatMessage creates a new ChatMessage.
 func NewChatMessage(role, content string) ChatMessage {
 	r, _ := unix.BytePtrFromString(role)
 	c, _ := unix.BytePtrFromString(content)
