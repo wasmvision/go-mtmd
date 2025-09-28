@@ -16,6 +16,8 @@ import (
 var (
 	modelFile *string
 	prompt    *string
+	template  *string
+	maxTokens *int
 	libPath   *string
 	verbose   *bool
 
@@ -115,7 +117,7 @@ func chat(text string) {
 	fmt.Println()
 
 	response := ""
-	for {
+	for pos := int32(0); pos+batch.NTokens < int32(*maxTokens); pos += batch.NTokens {
 		llama.Decode(lctx, batch)
 
 		token := llama.SamplerSample(sampler, lctx, -1)
@@ -147,7 +149,7 @@ func chat(text string) {
 
 func chatTemplate(first bool) string {
 	buf := make([]byte, 1024)
-	len := llama.ChatApplyTemplate("chatml", messages, first, buf)
+	len := llama.ChatApplyTemplate(*template, messages, first, buf)
 	return unix.BytePtrToString(unsafe.SliceData(buf[:len]))
 }
 
@@ -160,6 +162,8 @@ chat -model [model file path] -lib [llama.cpp .so file path] -prompt [omit this 
 func handleFlags() error {
 	modelFile = flag.String("model", "", "model file to use")
 	prompt = flag.String("prompt", "", "prompt")
+	template = flag.String("template", "chatml", "template name (defaults to chatml)")
+	maxTokens = flag.Int("maxtokens", -1, "maximum number of tokens to process")
 	libPath = flag.String("lib", "", "path to llama.cpp compiled library files")
 	verbose = flag.Bool("v", false, "verbose logging")
 
@@ -169,6 +173,10 @@ func handleFlags() error {
 		len(*libPath) == 0 {
 
 		return errors.New("missing a flag")
+	}
+
+	if *maxTokens < 0 {
+		*maxTokens = llama.MaxToken
 	}
 
 	return nil
