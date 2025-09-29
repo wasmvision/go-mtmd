@@ -10,7 +10,6 @@ import (
 	"github.com/hybridgroup/yzma/pkg/llama"
 	"github.com/hybridgroup/yzma/pkg/loader"
 	"github.com/hybridgroup/yzma/pkg/mtmd"
-	"github.com/hybridgroup/yzma/pkg/utils"
 )
 
 var (
@@ -59,7 +58,7 @@ func main() {
 	defer llama.Free(lctx)
 
 	vocab := llama.ModelGetVocab(model)
-	sampler := utils.NewSampler(model, utils.DefaultSamplers)
+	sampler := llama.NewSampler(model, llama.DefaultSamplers)
 	mtmdCtx := mtmd.InitFromFile(*projFile, model, mtmd.ContextParamsDefault())
 	defer mtmd.Free(mtmdCtx)
 

@@ -3,8 +3,8 @@ package llama
 import (
 	"unsafe"
 
+	"github.com/hybridgroup/yzma/pkg/utils"
 	"github.com/jupiterrider/ffi"
-	"golang.org/x/sys/unix"
 )
 
 var (
@@ -30,8 +30,8 @@ func loadChatFuncs(lib ffi.Lib) error {
 
 // NewChatMessage creates a new ChatMessage.
 func NewChatMessage(role, content string) ChatMessage {
-	r, _ := unix.BytePtrFromString(role)
-	c, _ := unix.BytePtrFromString(content)
+	r, _ := utils.BytePtrFromString(role)
+	c, _ := utils.BytePtrFromString(content)
 
 	return ChatMessage{Role: r, Content: c}
 }
@@ -39,7 +39,7 @@ func NewChatMessage(role, content string) ChatMessage {
 // ChatApplyTemplate applies a chat template to a slice of [ChatMessage], Set addAssistantPrompt to true to generate the
 // assistant prompt, for example on the first message.
 func ChatApplyTemplate(template string, chat []ChatMessage, addAssistantPrompt bool, buf []byte) int32 {
-	tmpl, _ := unix.BytePtrFromString(template)
+	tmpl, _ := utils.BytePtrFromString(template)
 
 	c := unsafe.Pointer(&chat[0])
 	nMsg := uint32(len(chat))

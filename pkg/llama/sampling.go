@@ -1,10 +1,11 @@
 package llama
 
 import (
+	"math"
 	"unsafe"
 
+	"github.com/hybridgroup/yzma/pkg/utils"
 	"github.com/jupiterrider/ffi"
-	"golang.org/x/sys/unix"
 )
 
 type SamplerType int32
@@ -293,8 +294,8 @@ func SamplerInitTempExt(t float32, delta float32, exponent float32) Sampler {
 }
 
 func SamplerInitGrammar(vocab Vocab, grammar, root string) Sampler {
-	grmr, _ := unix.BytePtrFromString(grammar)
-	r, _ := unix.BytePtrFromString(root)
+	grmr, _ := utils.BytePtrFromString(grammar)
+	r, _ := utils.BytePtrFromString(root)
 
 	var s Sampler
 	samplerInitGrammarFunc.Call(unsafe.Pointer(&s), unsafe.Pointer(&vocab), unsafe.Pointer(&grmr), unsafe.Pointer(&r))
@@ -315,4 +316,99 @@ func SamplerAccept(smpl Sampler, token Token) {
 
 func SamplerFree(smpl Sampler) {
 	samplerFreeFunc.Call(nil, unsafe.Pointer(&smpl))
+}
+
+var (
+	DefaultSamplers = []SamplerType{
+		SamplerTypePenalties,
+		SamplerTypeDry,
+		SamplerTypeTopNSigma,
+		SamplerTypeTopK,
+		SamplerTypeTypicalP,
+		SamplerTypeTopP,
+		SamplerTypeMinP,
+		SamplerTypeXTC,
+		SamplerTypeTemperature,
+	}
+)
+
+// NewSampler creates a new sampling chain.
+func NewSampler(model Model, samplers []SamplerType) Sampler {
+	vocab := ModelGetVocab(model)
+	nTokens := VocabNTokens(vocab)
+
+	params := SamplerChainDefaultParams()
+	sampler := SamplerChainInit(params)
+
+	logitBiasEOG := make([]LogitBias, 0)
+
+	for i := int32(0); i < nTokens; i++ {
+		token := Token(i)
+		if VocabIsEOG(vocab, token) {
+			logitBiasEOG = append(logitBiasEOG, LogitBias{Token: token, Bias: math.SmallestNonzeroFloat32})
+		}
+	}
+
+	bias := SamplerInitLogitBias(nTokens, int32(len(logitBiasEOG)), unsafe.SliceData(logitBiasEOG))
+	SamplerChainAdd(sampler, bias)
+
+	for samplerType := range samplers {
+		switch samplerType {
+		case SamplerTypeDry:
+			seqBreakers := []string{"\n", ":", "\"", "*"}
+			var combined []*byte
+			for _, s := range seqBreakers {
+				ptr, err := utils.BytePtrFromString(s)
+				if err != nil {
+					panic(err)
+				}
+				combined = append(combined, ptr)
+			}
+			seqBreakersPtr := unsafe.SliceData(combined)
+
+			dry := SamplerInitDry(vocab, ModelNCtxTrain(model), 0, 1.75, 2, 4096, seqBreakersPtr, uint32(len(seqBreakers)))
+			SamplerChainAdd(sampler, dry)
+
+		case SamplerTypeTopK:
+			topK := SamplerInitTopK(40)
+			SamplerChainAdd(sampler, topK)
+
+		case SamplerTypeTopP:
+			topP := SamplerInitTopP(0.95, 0)
+			SamplerChainAdd(sampler, topP)
+
+		case SamplerTypeMinP:
+			minP := SamplerInitMinP(0.05, 0)
+			SamplerChainAdd(sampler, minP)
+
+		case SamplerTypeTypicalP:
+			typical := SamplerInitTypical(1.0, 0)
+			SamplerChainAdd(sampler, typical)
+
+		case SamplerTypeTemperature:
+			temp := SamplerInitTempExt(0.2, 0, 1.0)
+			SamplerChainAdd(sampler, temp)
+
+		case SamplerTypeXTC:
+			xtc := SamplerInitXTC(0, 0.1, 0, DEFAULT_SEED)
+			SamplerChainAdd(sampler, xtc)
+
+		case SamplerTypeInfill:
+			// TODO: add implementation
+
+		case SamplerTypePenalties:
+			penalties := SamplerInitPenalties(64, 1.0, 0, 0)
+			SamplerChainAdd(sampler, penalties)
+
+		case SamplerTypeTopNSigma:
+			topNSigma := SamplerInitTopNSigma(-1.0)
+			SamplerChainAdd(sampler, topNSigma)
+		}
+	}
+
+	// always add this last
+	dist := SamplerInitDist(DEFAULT_SEED)
+	SamplerChainAdd(sampler, dist)
+
+	return sampler
 }

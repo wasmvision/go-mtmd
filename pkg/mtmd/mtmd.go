@@ -4,8 +4,8 @@ import (
 	"unsafe"
 
 	"github.com/hybridgroup/yzma/pkg/llama"
+	"github.com/hybridgroup/yzma/pkg/utils"
 	"github.com/jupiterrider/ffi"
-	"golang.org/x/sys/unix"
 )
 
 // enum mtmd_input_chunk_type
@@ -144,7 +144,7 @@ func loadFuncs(lib ffi.Lib) error {
 func DefaultMarker() string {
 	var marker *byte
 	defaultMarkerFunc.Call(unsafe.Pointer(&marker))
-	return unix.BytePtrToString(marker)
+	return utils.BytePtrToString(marker)
 }
 
 func ContextParamsDefault() ContextParamsType {
