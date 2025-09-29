@@ -11,7 +11,6 @@ import (
 	"github.com/hybridgroup/yzma/pkg/loader"
 	"github.com/hybridgroup/yzma/pkg/mtmd"
 	"github.com/hybridgroup/yzma/pkg/utils"
-	"golang.org/x/sys/unix"
 )
 
 var (
@@ -110,10 +109,11 @@ func main() {
 	}
 }
 
-func chatTemplate(first bool) string {
+func chatTemplate(add bool) string {
 	buf := make([]byte, 1024)
-	len := llama.ChatApplyTemplate(*template, messages, first, buf)
-	return unix.BytePtrToString(unsafe.SliceData(buf[:len]))
+	len := llama.ChatApplyTemplate(*template, messages, add, buf)
+	result := string(buf[:len])
+	return result
 }
 
 func showUsage() {
