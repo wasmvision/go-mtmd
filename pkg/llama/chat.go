@@ -41,7 +41,7 @@ func NewChatMessage(role, content string) ChatMessage {
 func ChatApplyTemplate(template string, chat []ChatMessage, addAssistantPrompt bool, buf []byte) int32 {
 	tmpl, _ := unix.BytePtrFromString(template)
 
-	c := unsafe.Pointer(&chat[len(chat)-1])
+	c := unsafe.Pointer(&chat[0])
 	nMsg := uint32(len(chat))
 
 	out := unsafe.SliceData(buf)

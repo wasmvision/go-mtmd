@@ -55,7 +55,7 @@ func loadBitmapFuncs(lib ffi.Lib) error {
 		return err
 	}
 
-	if bitmapInitFromBufFunc, err = lib.Prep("mtmd_helper_bitmap_init_from_buf", &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer); err != nil {
+	if bitmapInitFromBufFunc, err = lib.Prep("mtmd_helper_bitmap_init_from_buf", &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypeUint32); err != nil {
 		return err
 	}
 

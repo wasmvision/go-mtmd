@@ -6,11 +6,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"unsafe"
 
 	"github.com/wasmvision/yzma/pkg/llama"
 	"github.com/wasmvision/yzma/pkg/loader"
-	"golang.org/x/sys/unix"
 )
 
 var (
@@ -45,19 +43,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	llama.BackendInit()
-	defer llama.BackendFree()
-
 	if !*verbose {
 		llama.LogSet(llama.LogSilent(), uintptr(0))
 	}
+
+	llama.BackendInit()
+	defer llama.BackendFree()
 
 	model = llama.ModelLoadFromFile(*modelFile, llama.ModelDefaultParams())
 	defer llama.ModelFree(model)
 
 	vocab = llama.ModelGetVocab(model)
-	sampler = llama.SamplerChainInit(llama.SamplerChainDefaultParams())
-	llama.SamplerChainAdd(sampler, llama.SamplerInitGreedy())
 
 	ctxParams := llama.ContextDefaultParams()
 	ctxParams.NCtx = 4096
@@ -66,12 +62,21 @@ func main() {
 	lctx = llama.InitFromModel(model, ctxParams)
 	defer llama.Free(lctx)
 
+	sampler = llama.SamplerChainInit(llama.SamplerChainDefaultParams())
+	llama.SamplerChainAdd(sampler, llama.SamplerInitMinP(0.05, 1))
+	llama.SamplerChainAdd(sampler, llama.SamplerInitTempExt(0.7, 0, 1.0))
+	llama.SamplerChainAdd(sampler, llama.SamplerInitDist(llama.DEFAULT_SEED))
+
+	if *template == "" {
+		*template = llama.ModelChatTemplate(model, "")
+	}
+
 	messages = make([]llama.ChatMessage, 0)
 
 	// single message
 	if len(*prompt) > 0 {
 		messages = append(messages, llama.NewChatMessage("user", *prompt))
-		chat(chatTemplate(true))
+		chat(chatTemplate(true), true)
 
 		return
 	}
@@ -88,18 +93,18 @@ func main() {
 		}
 
 		messages = append(messages, llama.NewChatMessage("user", pmpt))
-		chat(chatTemplate(first))
+		chat(chatTemplate(true), first)
 		first = false
 	}
 }
 
-func chat(text string) {
+func chat(text string, first bool) {
 	// call once to get the size
-	count := llama.Tokenize(vocab, text, nil, true, true)
+	count := llama.Tokenize(vocab, text, nil, first, true)
 
 	// now get the actual tokens
 	tokens := make([]llama.Token, count)
-	llama.Tokenize(vocab, text, tokens, true, true)
+	llama.Tokenize(vocab, text, tokens, first, true)
 
 	batch := llama.BatchGetOne(tokens)
 
@@ -119,26 +124,18 @@ func chat(text string) {
 	response := ""
 	for pos := int32(0); pos+batch.NTokens < int32(*maxTokens); pos += batch.NTokens {
 		llama.Decode(lctx, batch)
-
 		token := llama.SamplerSample(sampler, lctx, -1)
-		llama.SamplerAccept(sampler, token)
 
 		if llama.VocabIsEOG(vocab, token) {
-			messages = append(messages, llama.NewChatMessage("assistant", response))
 			fmt.Println()
 			break
 		}
 
-		buf := make([]byte, 16)
-		l := llama.TokenToPiece(vocab, token, buf, 0, true)
+		buf := make([]byte, 256)
+		l := llama.TokenToPiece(vocab, token, buf, 0, false)
 		next := string(buf[:l])
 
 		batch = llama.BatchGetOne([]llama.Token{token})
-
-		// TODO: figure out why qwen returns this.
-		if next == "assistant" {
-			continue
-		}
 
 		fmt.Print(next)
 		response += next
@@ -147,10 +144,11 @@ func chat(text string) {
 	fmt.Println()
 }
 
-func chatTemplate(first bool) string {
+func chatTemplate(add bool) string {
 	buf := make([]byte, 1024)
-	len := llama.ChatApplyTemplate(*template, messages, first, buf)
-	return unix.BytePtrToString(unsafe.SliceData(buf[:len]))
+	len := llama.ChatApplyTemplate(*template, messages, add, buf)
+	result := string(buf[:len])
+	return result
 }
 
 func showUsage() {
@@ -162,7 +160,7 @@ chat -model [model file path] -lib [llama.cpp .so file path] -prompt [omit this 
 func handleFlags() error {
 	modelFile = flag.String("model", "", "model file to use")
 	prompt = flag.String("prompt", "", "prompt")
-	template = flag.String("template", "chatml", "template name (defaults to chatml)")
+	template = flag.String("template", "", "template name")
 	maxTokens = flag.Int("maxtokens", -1, "maximum number of tokens to process")
 	libPath = flag.String("lib", "", "path to llama.cpp compiled library files")
 	verbose = flag.Bool("v", false, "verbose logging")

@@ -4,6 +4,7 @@ import (
 	"unsafe"
 
 	"github.com/jupiterrider/ffi"
+	"golang.org/x/sys/unix"
 )
 
 type SamplerType int32
@@ -89,6 +90,12 @@ var (
 	// LLAMA_API struct llama_sampler * llama_sampler_init_temp_ext   (float   t, float   delta, float exponent);
 	samplerInitTempExtFunc ffi.Fun
 
+	// LLAMA_API struct llama_sampler * llama_sampler_init_grammar(
+	// 					const struct llama_vocab * vocab,
+	//               	const char * grammar_str,
+	//               	const char * grammar_root);
+	samplerInitGrammarFunc ffi.Fun
+
 	// LLAMA_API llama_token llama_sampler_sample(struct llama_sampler * smpl, struct llama_context * ctx, int32_t idx);
 	samplerSampleFunc ffi.Fun
 
@@ -159,6 +166,10 @@ func loadSamplingFuncs(lib ffi.Lib) error {
 	}
 
 	if samplerInitTempExtFunc, err = lib.Prep("llama_sampler_init_temp_ext", &ffi.TypePointer, &ffi.TypeFloat, &ffi.TypeFloat, &ffi.TypeFloat); err != nil {
+		return err
+	}
+
+	if samplerInitGrammarFunc, err = lib.Prep("llama_sampler_init_grammar", &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer, &ffi.TypePointer); err != nil {
 		return err
 	}
 
@@ -277,6 +288,16 @@ func SamplerInitXTC(p float32, t float32, minKeep uint32, seed uint32) Sampler {
 func SamplerInitTempExt(t float32, delta float32, exponent float32) Sampler {
 	var s Sampler
 	samplerInitTempExtFunc.Call(unsafe.Pointer(&s), unsafe.Pointer(&t), unsafe.Pointer(&delta), unsafe.Pointer(&exponent))
+
+	return s
+}
+
+func SamplerInitGrammar(vocab Vocab, grammar, root string) Sampler {
+	grmr, _ := unix.BytePtrFromString(grammar)
+	r, _ := unix.BytePtrFromString(root)
+
+	var s Sampler
+	samplerInitGrammarFunc.Call(unsafe.Pointer(&s), unsafe.Pointer(&vocab), unsafe.Pointer(&grmr), unsafe.Pointer(&r))
 
 	return s
 }

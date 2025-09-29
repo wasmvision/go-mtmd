@@ -127,12 +127,12 @@ func VocabNTokens(vocab Vocab) int32 {
 }
 
 func TokenToPiece(vocab Vocab, token Token, buf []byte, lstrip int32, special bool) int32 {
-	piece := make([]byte, len(buf)+1)
+	piece := make([]byte, len(buf))
 	b := unsafe.SliceData(piece)
 	bLen := int32(len(piece))
 
 	var result ffi.Arg
-	tokenToPieceFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&vocab), unsafe.Pointer(&token), unsafe.Pointer(&b),
+	tokenToPieceFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&vocab), &token, unsafe.Pointer(&b),
 		&bLen, &lstrip, &special)
 
 	copy(buf, piece)

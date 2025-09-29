@@ -18,8 +18,11 @@ var (
 	modelFile *string
 	projFile  *string
 	prompt    *string
+	template  *string
 	imageFile *string
 	libPath   *string
+
+	messages []llama.ChatMessage
 )
 
 func main() {
@@ -61,8 +64,14 @@ func main() {
 	mtmdCtx := mtmd.InitFromFile(*projFile, model, mtmd.ContextParamsDefault())
 	defer mtmd.Free(mtmdCtx)
 
+	if *template == "" {
+		*template = llama.ModelChatTemplate(model, "")
+	}
+
+	messages = []llama.ChatMessage{llama.NewChatMessage("user", *prompt+mtmd.DefaultMarker())}
+
 	output := mtmd.InputChunksInit()
-	input := mtmd.NewInputText(chatTemplate(*prompt), true, true)
+	input := mtmd.NewInputText(chatTemplate(true), true, true)
 	bitmap := mtmd.BitmapInitFromFile(mtmdCtx, *imageFile)
 	defer mtmd.BitmapFree(bitmap)
 
@@ -82,7 +91,6 @@ func main() {
 
 	for i := 0; i < llama.MaxToken; i++ {
 		token := llama.SamplerSample(sampler, lctx, -1)
-		llama.SamplerAccept(sampler, token)
 
 		if llama.VocabIsEOG(vocab, token) {
 			fmt.Println()
@@ -102,12 +110,10 @@ func main() {
 	}
 }
 
-func chatTemplate(prompt string) string {
-	chat := []llama.ChatMessage{llama.NewChatMessage("user", prompt+mtmd.DefaultMarker())}
+func chatTemplate(first bool) string {
 	buf := make([]byte, 1024)
-
-	llama.ChatApplyTemplate("chatml", chat, true, buf)
-	return unix.BytePtrToString(unsafe.SliceData(buf))
+	len := llama.ChatApplyTemplate(*template, messages, first, buf)
+	return unix.BytePtrToString(unsafe.SliceData(buf[:len]))
 }
 
 func showUsage() {
@@ -120,6 +126,7 @@ func handleFlags() error {
 	modelFile = flag.String("model", "", "model file to use")
 	projFile = flag.String("proj", "", "projector file to use")
 	prompt = flag.String("prompt", "what is this?", "prompt")
+	template = flag.String("template", "", "template name")
 	imageFile = flag.String("image", "", "image file to use")
 	libPath = flag.String("lib", "", "path to llama.cpp compiled library files")
 
