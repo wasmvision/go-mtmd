@@ -1,0 +1,34 @@
+name: Linux
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Install Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25.1'
+      - name: Download llama.cpp
+        uses: robinraju/release-downloader@v1
+        with:
+            repository: 'ggml-org/llama.cpp'
+            latest: true
+            fileName: 'llama-*-bin-ubuntu-x64.zip'
+            out-file-path: 'lib'
+            extract: true
+      - name: Move llama.cpp files
+        run: cp ./lib/build/bin/*.so ./lib/
+      - name: Run tests
+        run: go test -v ./...
