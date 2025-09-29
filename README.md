@@ -1,18 +1,87 @@
 # yzma
 
-`yzma` lets you perform multimodal inference with Vision Language Models (VLMs) on your own hardware by using the [`llama.cpp`](https://github.com/ggml-org/llama.cpp) libraries.
+`yzma` lets you use Go to perform local inference with Vision Language Models (VLMs), Large Language Models (LLMs), Small Language Models (SLMs), and Tiny Language Models (TLMs) by using the [`llama.cpp`](https://github.com/ggml-org/llama.cpp) libraries all running on your own hardware.
 
 It uses the [`purego`](https://github.com/ebitengine/purego) and [`ffi`](https://github.com/JupiterRider/ffi) packages so calls can be made directly to `llama.cpp` without CGo.
 
-Still a work in progress but it is already functioning.
+```go
+package main
 
-Borrows definitions from the https://github.com/dianlight/gollama.cpp package then modifies them rather heavily. Thank you!
+import (
+	"fmt"
+
+	"github.com/hybridgroup/yzma/pkg/llama"
+	"github.com/hybridgroup/yzma/pkg/loader"
+)
+
+var (
+	modelFile            = "./models/tinyllama-1.1b-chat-v1.0.Q2_K.gguf"
+	prompt               = "Are you ready to rock?"
+	libPath              = "./lib"
+	responseLength int32 = 64
+)
+
+func main() {
+	lib, _ := loader.LoadLibrary(libPath)
+	llama.Load(lib)
+
+	llama.BackendInit()
+	llama.LogSet(llama.LogSilent(), uintptr(0))
+
+	model := llama.ModelLoadFromFile(modelFile, llama.ModelDefaultParams())
+	vocab := llama.ModelGetVocab(model)
+
+	sampler := llama.SamplerChainInit(llama.SamplerChainDefaultParams())
+	llama.SamplerChainAdd(sampler, llama.SamplerInitGreedy())
+
+	// call once to get the size of the tokens from the prompt
+	count := llama.Tokenize(vocab, prompt, nil, true, false)
+
+	// now get the actual tokens
+	tokens := make([]llama.Token, count)
+	llama.Tokenize(vocab, prompt, tokens, true, false)
+
+	lctx := llama.InitFromModel(model, llama.ContextDefaultParams())
+	batch := llama.BatchGetOne(tokens)
+	for pos := int32(0); pos+batch.NTokens < count+responseLength; pos += batch.NTokens {
+		llama.Decode(lctx, batch)
+		token := llama.SamplerSample(sampler, lctx, -1)
+
+		if llama.VocabIsEOG(vocab, token) {
+			fmt.Println()
+			break
+		}
+
+		buf := make([]byte, 36)
+		llama.TokenToPiece(vocab, token, buf, 0, true)
+
+		fmt.Print(string(buf))
+
+		batch = llama.BatchGetOne([]llama.Token{token})
+	}
+
+	fmt.Println()
+}
+```
+
+Produces the following output:
+
+```shell
+$ go run ./examples/hello/
+
+
+[Scene 2: The stage is set with a small stage and a large mirror. The audience is seated in a circle, with the performer standing in the center.]
+
+Performer: (singing) Let's rock!
+
+[The performer begins to sing a song, with the audience singing along.
+```
 
 ## Installation
 
 You will need to download the `llama.cpp` libraries for your platform. You can obtain them from https://github.com/ggml-org/llama.cpp/releases
 
-Extract the library files into a directory on local machine.
+Extract the library files into a directory on your local machine.
 
 For Linux, they have the `.so` file extension. For example, `libllama.so`, `libmtmd.so` and so on. When using macOS, they have a `.dylib` file extension. And on Windows, they have a `.dll` file extension. You do not need the other downloaded files to use the `llama.cpp` libraries with `yzma`.
 
@@ -25,9 +94,9 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/ron/Development/yzma/lib
 
 ## Examples
 
-### VLM example
+### Vision Language Model (VLM) multimodal example
 
-This example uses the [`Qwen2.5-VL-3B-Instruct-Q8_0`](https://huggingface.co/ggml-org/Qwen2.5-VL-3B-Instruct-GGUF) VLM model to process a input of a text prompt and an image, and then displays the result.
+This example uses the [`Qwen2.5-VL-3B-Instruct-Q8_0`](https://huggingface.co/ggml-org/Qwen2.5-VL-3B-Instruct-GGUF) VLM model to process both a text prompt and an image, then displays the result.
 
 ```shell
 $ go run ./examples/vlm/ -model ./models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf -proj ./models/mmproj-Qwen2.5-VL-3B-Instruct-Q8_0.gguf -lib ./lib -image ./images/domestic_llama.jpg -prompt "What is in this picture?" 2>/dev/null
@@ -42,10 +111,9 @@ The picture shows a white llama standing in a fenced-in area, possibly a zoo or 
 
 [See the code here](./examples/vlm/main.go).
 
-### Chat example
+### Small Language Model (SLM) interactive chat example
 
-You can also use `yzma` to do inference on text language models. This example uses the [`qwen2.5-0.5b-instruct-fp16.gguf `](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF) model for a chat session.
-
+You can use `yzma` to do inference on text language models. This example uses the [`qwen2.5-0.5b-instruct-fp16.gguf `](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF) model for an interactive chat session.
 
 ```shell
 $ go run ./examples/chat/ -model ./models/qwen2.5-0.5b-instruct-fp16.gguf -lib ./lib/
@@ -65,3 +133,11 @@ Sure! Let's go to the zoo and feed the llama. What kind of llama are you interes
 ```
 
 [See the code here](./examples/chat/main.go).
+
+## More info
+
+`yzma` is still a work in progress but it already has support for some basic functionality.
+
+Borrows definitions from the https://github.com/dianlight/gollama.cpp package then modifies them rather heavily. Thank you!
+
+The idea is to make it easier for Go developers to use language models as part of "normal" applications without having to use containers or do anything other than the normal `GOOS` and `GOARCH` env variables for cross-complication. Also to make it possible to use VLMs and other multimodal models with hardware acceleration.
