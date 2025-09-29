@@ -3,8 +3,8 @@ package llama
 import (
 	"unsafe"
 
+	"github.com/hybridgroup/yzma/pkg/utils"
 	"github.com/jupiterrider/ffi"
-	"golang.org/x/sys/unix"
 )
 
 var (
@@ -126,7 +126,7 @@ func ModelChatTemplate(model Model, name string) string {
 	}
 	modelChatTemplateFunc.Call(unsafe.Pointer(&template), unsafe.Pointer(&model), unsafe.Pointer(&n))
 
-	return unix.BytePtrToString(template)
+	return utils.BytePtrToString(template)
 }
 
 // ModelHasEncoder returns if the Model has an encoder.
@@ -158,4 +158,49 @@ func ModelNCtxTrain(model Model) int32 {
 	modelNCtxTrainFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&model))
 
 	return int32(result)
+}
+
+// Warmup is to warm-up a model.
+func Warmup(lctx Context, model Model) {
+	vocab := ModelGetVocab(model)
+
+	SetWarmup(lctx, true)
+
+	tokens := make([]Token, 0)
+	bos := VocabBOS(vocab)
+	eos := VocabEOS(vocab)
+
+	if bos != TOKEN_NULL {
+		tokens = append(tokens, bos)
+	}
+	if eos != TOKEN_NULL {
+		tokens = append(tokens, eos)
+	}
+	if len(tokens) == 0 {
+		tokens = append(tokens, 0)
+	}
+
+	if ModelHasEncoder(model) {
+		batch := BatchGetOne(tokens)
+		Encode(lctx, batch)
+
+		start := ModelDecoderStartToken(model)
+		if start == TOKEN_NULL {
+			start = bos
+		}
+		tokens = append([]Token{}, start)
+	}
+
+	if ModelHasDecoder(model) {
+		batch := BatchGetOne(tokens)
+		Decode(lctx, batch)
+	}
+
+	mem := GetMemory(lctx)
+	MemoryClear(mem, true)
+
+	Synchronize(lctx)
+
+	// llama_perf_context_reset(lctx);
+	SetWarmup(lctx, false)
 }

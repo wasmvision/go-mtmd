@@ -3,8 +3,8 @@ package llama
 import (
 	"unsafe"
 
+	"github.com/hybridgroup/yzma/pkg/utils"
 	"github.com/jupiterrider/ffi"
-	"golang.org/x/sys/unix"
 )
 
 var (
@@ -141,7 +141,7 @@ func TokenToPiece(vocab Vocab, token Token, buf []byte, lstrip int32, special bo
 }
 
 func Tokenize(vocab Vocab, text string, tokens []Token, addSpecial bool, parseSpecial bool) int32 {
-	txt, _ := unix.BytePtrFromString(text)
+	txt, _ := utils.BytePtrFromString(text)
 	txtLen := int32(len(text))
 
 	toks := unsafe.SliceData(tokens)
