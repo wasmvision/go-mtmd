@@ -4,7 +4,7 @@ import (
 	"math"
 	"unsafe"
 
-	"github.com/wasmvision/yzma/pkg/llama"
+	"github.com/hybridgroup/yzma/pkg/llama"
 	"golang.org/x/sys/unix"
 )
 

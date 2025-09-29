@@ -1,4 +1,4 @@
-module github.com/wasmvision/yzma
+module github.com/hybridgroup/yzma
 
 go 1.25.0
 

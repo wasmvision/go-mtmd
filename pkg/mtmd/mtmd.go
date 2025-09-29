@@ -3,8 +3,8 @@ package mtmd
 import (
 	"unsafe"
 
+	"github.com/hybridgroup/yzma/pkg/llama"
 	"github.com/jupiterrider/ffi"
-	"github.com/wasmvision/yzma/pkg/llama"
 	"golang.org/x/sys/unix"
 )
 

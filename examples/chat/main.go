@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/wasmvision/yzma/pkg/llama"
-	"github.com/wasmvision/yzma/pkg/loader"
+	"github.com/hybridgroup/yzma/pkg/llama"
+	"github.com/hybridgroup/yzma/pkg/loader"
 )
 
 var (

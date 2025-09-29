@@ -7,10 +7,10 @@ import (
 	"os"
 	"unsafe"
 
-	"github.com/wasmvision/yzma/pkg/llama"
-	"github.com/wasmvision/yzma/pkg/loader"
-	"github.com/wasmvision/yzma/pkg/mtmd"
-	"github.com/wasmvision/yzma/pkg/utils"
+	"github.com/hybridgroup/yzma/pkg/llama"
+	"github.com/hybridgroup/yzma/pkg/loader"
+	"github.com/hybridgroup/yzma/pkg/mtmd"
+	"github.com/hybridgroup/yzma/pkg/utils"
 	"golang.org/x/sys/unix"
 )
 

@@ -3,7 +3,7 @@ package llama
 import (
 	"testing"
 
-	"github.com/wasmvision/yzma/pkg/loader"
+	"github.com/hybridgroup/yzma/pkg/loader"
 )
 
 func TestChat(t *testing.T) {
