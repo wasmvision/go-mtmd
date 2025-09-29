@@ -175,6 +175,8 @@ func SupportVision(ctx Context) bool {
 	return result.Bool()
 }
 
+// InputChunksInit initializes a list of InputChunk.
+// It can only be populated via Tokenize().
 func InputChunksInit() InputChunks {
 	var chunks InputChunks
 	inputChunksInitFunc.Call(unsafe.Pointer(&chunks))
@@ -182,6 +184,7 @@ func InputChunksInit() InputChunks {
 	return chunks
 }
 
+// InputChunksSize returns the number of InputChunk in the list.
 func InputChunksSize(chunks InputChunks) uint32 {
 	var result ffi.Arg
 	inputChunksSizeFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&chunks))
@@ -236,6 +239,9 @@ func NewInputText(text string, addSpecial, parseSpecial bool) *InputText {
 // otherwise, returns 0 on success
 // this function is NOT thread-safe
 func HelperEvalChunks(ctx Context, lctx llama.Context, chunks InputChunks, nPast llama.Pos, seqID llama.SeqId, nBatch int32, logitsLast bool, newNPast *llama.Pos) int32 {
+	muHelperEvalChunks.Lock()
+	defer muHelperEvalChunks.Unlock()
+
 	var result ffi.Arg
 	helperEvalChunksFunc.Call(unsafe.Pointer(&result), unsafe.Pointer(&ctx), unsafe.Pointer(&lctx), unsafe.Pointer(&chunks), unsafe.Pointer(&nPast), unsafe.Pointer(&seqID),
 		unsafe.Pointer(&nBatch), unsafe.Pointer(&logitsLast), unsafe.Pointer(&newNPast))
