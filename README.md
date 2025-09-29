@@ -136,8 +136,17 @@ Sure! Let's go to the zoo and feed the llama. What kind of llama are you interes
 
 ## More info
 
-`yzma` is still a work in progress but it already has support for some basic functionality.
+`yzma` is still a work in progress but it has support for some basic functionality.
 
-Borrows definitions from the https://github.com/dianlight/gollama.cpp package then modifies them rather heavily. Thank you!
+You can already use VLMs and other language models with full hardware acceleration.
 
-The idea is to make it easier for Go developers to use language models as part of "normal" applications without having to use containers or do anything other than the normal `GOOS` and `GOARCH` env variables for cross-complication. Also to make it possible to use VLMs and other multimodal models with hardware acceleration.
+Here are some advantages of `yzma` over other Go packages for `llama.cpp`:
+
+- Compile Go programs that use `yzma` with the normal `go build` and `go run` commands. No C compiler needed!
+- Use the `llama.cpp` libraries with whatever hardware acceleration is available for your configuration. CUDA, Vulkan, etc.
+- Download `llama.cpp` precompiled libraries directly from Github, or include them with your application.
+- Update the `llama.cpp` libraries without recompiling your Go program, as long as `llama.cpp` does not make any breaking changes.
+
+The idea is to make it easier for Go developers to use language models as part of "normal" applications without having to use containers or do anything other than the normal `GOOS` and `GOARCH` env variables for cross-complication.
+
+`yzma` borrows definitions from the https://github.com/dianlight/gollama.cpp package then modifies them rather heavily. Thank you!
