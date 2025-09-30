@@ -46,6 +46,8 @@ func main() {
 	llama.BackendInit()
 	defer llama.BackendFree()
 
+	llama.GGMLBackendLoadAll()
+
 	fmt.Println("Loading model", *modelFile)
 	model := llama.ModelLoadFromFile(*modelFile, llama.ModelDefaultParams())
 	defer llama.ModelFree(model)
