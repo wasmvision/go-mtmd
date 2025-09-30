@@ -26,16 +26,9 @@ var (
 )
 
 func main() {
-	lib, err := loader.LoadLibrary(libPath)
-	if err != nil {
-		panic(err)
-	}
-	if err := llama.Load(lib); err != nil {
-		panic(err)
-	}
-
-	llama.BackendInit()
-	llama.GGMLBackendLoadAll()
+	lib, _ := loader.LoadLibrary(libPath)
+	llama.Load(lib)
+	llama.Init()
 
 	model := llama.ModelLoadFromFile(modelFile, llama.ModelDefaultParams())
 	vocab := llama.ModelGetVocab(model)
@@ -90,12 +83,10 @@ Extract the library files into a directory on your local machine.
 For Linux, they have the `.so` file extension. For example, `libllama.so`, `libmtmd.so` and so on. When using macOS, they have a `.dylib` file extension. And on Windows, they have a `.dll` file extension. You do not need the other downloaded files to use the `llama.cpp` libraries with `yzma`.
 
 ***Important Note***
-You currently need to add the `llama.cpp` library files to the same directory where your `yzma` compiled application is being run from.
-
-You may also need to add the directory with your llama.cpp library files to your `LD_LIBRARY_PATH` env variable. For example:
+You currently need to set a `YZMA_LIB` env variable to the directory with your llama.cpp library files. For example:
 
 ```shell
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/ron/Development/yzma/lib
+export YZMA_LIB=/home/ron/Development/yzma/lib
 ```
 
 ## Examples
@@ -105,7 +96,7 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/ron/Development/yzma/lib
 This example uses the [`Qwen2.5-VL-3B-Instruct-Q8_0`](https://huggingface.co/ggml-org/Qwen2.5-VL-3B-Instruct-GGUF) VLM model to process both a text prompt and an image, then displays the result.
 
 ```shell
-$ go run ./examples/vlm/ -model ./models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf -proj ./models/mmproj-Qwen2.5-VL-3B-Instruct-Q8_0.gguf -lib ./lib -image ./images/domestic_llama.jpg -prompt "What is in this picture?" 2>/dev/null
+$ go run ./examples/vlm/ -model ./models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf -proj ./models/mmproj-Qwen2.5-VL-3B-Instruct-Q8_0.gguf -image ./images/domestic_llama.jpg -prompt "What is in this picture?" 2>/dev/null
 Loading model ./models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf
 encoding image slice...
 image slice encoded in 966 ms
@@ -122,7 +113,7 @@ The picture shows a white llama standing in a fenced-in area, possibly a zoo or 
 You can use `yzma` to do inference on text language models. This example uses the [`qwen2.5-0.5b-instruct-fp16.gguf `](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF) model for an interactive chat session.
 
 ```shell
-$ go run ./examples/chat/ -model ./models/qwen2.5-0.5b-instruct-fp16.gguf -lib ./lib/
+$ go run ./examples/chat/ -model ./models/qwen2.5-0.5b-instruct-fp16.gguf
 Enter prompt: Are you ready to go?
 
 Yes, I'm ready to go! What would you like to do?

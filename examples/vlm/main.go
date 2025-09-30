@@ -43,10 +43,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	llama.BackendInit()
+	llama.Init()
 	defer llama.BackendFree()
-
-	llama.GGMLBackendLoadAll()
 
 	fmt.Println("Loading model", *modelFile)
 	model := llama.ModelLoadFromFile(*modelFile, llama.ModelDefaultParams())
@@ -136,10 +134,17 @@ func handleFlags() error {
 	if len(*modelFile) == 0 ||
 		len(*projFile) == 0 ||
 		len(*prompt) == 0 ||
-		len(*imageFile) == 0 ||
-		len(*libPath) == 0 {
+		len(*imageFile) == 0 {
 
 		return errors.New("missing a flag")
+	}
+
+	if os.Getenv("YZMA_LIB") != "" {
+		*libPath = os.Getenv("YZMA_LIB")
+	}
+
+	if len(*libPath) == 0 {
+		return errors.New("missing lib flag or YZMA_LIB env var")
 	}
 
 	return nil
