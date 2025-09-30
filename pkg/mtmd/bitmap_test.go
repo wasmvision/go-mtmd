@@ -30,9 +30,6 @@ func TestBitmap(t *testing.T) {
 
 func testSetup(t *testing.T) {
 	testPath := "../../lib"
-	if os.Getenv("YZMA_TEST_LIBS") != "" {
-		testPath = os.Getenv("YZMA_TEST_LIBS")
-	}
 
 	lib, err := loader.LoadLibrary(testPath)
 	if err != nil {
