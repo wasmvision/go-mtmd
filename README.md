@@ -83,9 +83,10 @@ Extract the library files into a directory on your local machine.
 For Linux, they have the `.so` file extension. For example, `libllama.so`, `libmtmd.so` and so on. When using macOS, they have a `.dylib` file extension. And on Windows, they have a `.dll` file extension. You do not need the other downloaded files to use the `llama.cpp` libraries with `yzma`.
 
 ***Important Note***
-You currently need to set a `YZMA_LIB` env variable to the directory with your llama.cpp library files. For example:
+You currently need to set both the `LD_LIBRARY_PATH` and the `YZMA_LIB` env variable to the directory with your llama.cpp library files. For example:
 
 ```shell
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/ron/Development/yzma/lib
 export YZMA_LIB=/home/ron/Development/yzma/lib
 ```
 
