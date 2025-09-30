@@ -18,7 +18,7 @@ func LoadLibrary(path string) (ffi.Lib, error) {
 	case "linux", "freebsd":
 		filename = filepath.Join(path, "libmtmd.so")
 	case "windows":
-		filename = filepath.Join(path, "libmtmd.dll")
+		filename = filepath.Join(path, "mtmd.dll")
 	case "darwin":
 		filename = filepath.Join(path, "libmtmd.dylib")
 	}
