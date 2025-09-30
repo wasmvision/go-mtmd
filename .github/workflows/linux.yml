@@ -32,3 +32,9 @@ jobs:
         run: cp ./lib/build/bin/*.so ./lib/
       - name: Run tests
         run: go test -v ./...
+      - name: Download test model
+        run: |
+            mkdir -p ./models
+            curl -Lo ./models/SmolLM-135M.Q2_K.gguf https://huggingface.co/QuantFactory/SmolLM-135M-GGUF/resolve/main/SmolLM-135M.Q2_K.gguf
+      - name: Run inference test
+        run: go run ./examples/hello
