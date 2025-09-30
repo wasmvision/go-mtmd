@@ -33,7 +33,7 @@ jobs:
       - name: Add llama.cpp libs to path
         run: |
             echo "$GITHUB_WORKSPACE" >> "$GITHUB_PATH"
-            echo "YZMA_TEST_LIBS=$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
+            echo "YZMA_LIB=$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
       - name: Run tests
         run: go test -v ./...
       - name: Download test model
