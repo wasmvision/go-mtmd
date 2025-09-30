@@ -28,8 +28,12 @@ jobs:
             fileName: 'llama-*-bin-ubuntu-x64.zip'
             out-file-path: 'lib'
             extract: true
-      - name: Move llama.cpp files
-        run: cp ./lib/build/bin/*.so ./lib/
+      - name: Move llama.cpp files to root directory
+        run: cp ./lib/build/bin/* .
+      - name: Add llama.cpp libs to path
+        run: |
+            echo "$GITHUB_WORKSPACE" >> "$GITHUB_PATH"
+            echo "YZMA_TEST_LIBS=$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
       - name: Run tests
         run: go test -v ./...
       - name: Download test model
