@@ -19,6 +19,8 @@ func main() {
 	llama.Load(lib)
 
 	llama.BackendInit()
+	llama.GGMLBackendLoadAll()
+
 	//	llama.LogSet(llama.LogSilent(), uintptr(0))
 
 	model := llama.ModelLoadFromFile(modelFile, llama.ModelDefaultParams())
