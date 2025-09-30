@@ -2,8 +2,6 @@ package llama
 
 import (
 	"testing"
-
-	"github.com/hybridgroup/yzma/pkg/loader"
 )
 
 func TestChat(t *testing.T) {
@@ -22,19 +20,4 @@ func TestChat(t *testing.T) {
 	if len(result) == 0 {
 		t.Fatal("invalid output from chat template")
 	}
-}
-
-func testSetup(t *testing.T) {
-	testPath := "../../lib"
-	lib, err := loader.LoadLibrary(testPath)
-	if err != nil {
-		t.Fatal("unable to load libary", err.Error())
-	}
-	Load(lib)
-
-	BackendInit()
-}
-
-func testCleanup(t *testing.T) {
-	BackendFree()
 }
