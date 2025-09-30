@@ -1,8 +1,12 @@
 # yzma
 
+[![Linux](https://github.com/hybridgroup/yzma/actions/workflows/linux.yml/badge.svg)](https://github.com/hybridgroup/yzma/actions/workflows/linux.yml) [![macOS](https://github.com/hybridgroup/yzma/actions/workflows/macos.yml/badge.svg)](https://github.com/hybridgroup/yzma/actions/workflows/macos.yml)
+
 `yzma` lets you use Go to perform local inference with Vision Language Models (VLMs), Large Language Models (LLMs), Small Language Models (SLMs), and Tiny Language Models (TLMs) by using the [`llama.cpp`](https://github.com/ggml-org/llama.cpp) libraries all running on your own hardware.
 
 It uses the [`purego`](https://github.com/ebitengine/purego) and [`ffi`](https://github.com/JupiterRider/ffi) packages so calls can be made directly to `llama.cpp` without CGo.
+
+This example uses the [SmolLM-135M.Q2_K](https://huggingface.co/QuantFactory/SmolLM-135M-GGUF) model:
 
 ```go
 package main
@@ -15,18 +19,23 @@ import (
 )
 
 var (
-	modelFile            = "./models/tinyllama-1.1b-chat-v1.0.Q2_K.gguf"
+	modelFile            = "./models/SmolLM-135M.Q2_K.gguf"
 	prompt               = "Are you ready to rock?"
 	libPath              = "./lib"
-	responseLength int32 = 64
+	responseLength int32 = 12
 )
 
 func main() {
-	lib, _ := loader.LoadLibrary(libPath)
-	llama.Load(lib)
+	lib, err := loader.LoadLibrary(libPath)
+	if err != nil {
+		panic(err)
+	}
+	if err := llama.Load(lib); err != nil {
+		panic(err)
+	}
 
 	llama.BackendInit()
-	llama.LogSet(llama.LogSilent(), uintptr(0))
+	llama.GGMLBackendLoadAll()
 
 	model := llama.ModelLoadFromFile(modelFile, llama.ModelDefaultParams())
 	vocab := llama.ModelGetVocab(model)
@@ -53,9 +62,9 @@ func main() {
 		}
 
 		buf := make([]byte, 36)
-		llama.TokenToPiece(vocab, token, buf, 0, true)
+		len := llama.TokenToPiece(vocab, token, buf, 0, true)
 
-		fmt.Print(string(buf))
+		fmt.Print(string(buf[:len]))
 
 		batch = llama.BatchGetOne([]llama.Token{token})
 	}
@@ -67,14 +76,9 @@ func main() {
 Produces the following output:
 
 ```shell
-$ go run ./examples/hello/
+$ go run ./examples/hello/ 2>/dev/null
 
-
-[Scene 2: The stage is set with a small stage and a large mirror. The audience is seated in a circle, with the performer standing in the center.]
-
-Performer: (singing) Let's rock!
-
-[The performer begins to sing a song, with the audience singing along.
+The first thing you need to do is learn how to use a computer.
 ```
 
 ## Installation
@@ -86,7 +90,9 @@ Extract the library files into a directory on your local machine.
 For Linux, they have the `.so` file extension. For example, `libllama.so`, `libmtmd.so` and so on. When using macOS, they have a `.dylib` file extension. And on Windows, they have a `.dll` file extension. You do not need the other downloaded files to use the `llama.cpp` libraries with `yzma`.
 
 ***Important Note***
-You will need to add the directory with your llama.cpp library files to your `LD_LIBRARY_PATH` env variable. For example:
+You currently need to add the `llama.cpp` library files to the same directory where your `yzma` compiled application is being run from.
+
+You may also need to add the directory with your llama.cpp library files to your `LD_LIBRARY_PATH` env variable. For example:
 
 ```shell
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/ron/Development/yzma/lib
