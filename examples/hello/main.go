@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/hybridgroup/yzma/pkg/llama"
 	"github.com/hybridgroup/yzma/pkg/loader"
@@ -11,15 +10,11 @@ import (
 var (
 	modelFile            = "./models/SmolLM-135M.Q2_K.gguf"
 	prompt               = "Are you ready to rock?"
-	libPath              = "."
+	libPath              = "./lib"
 	responseLength int32 = 12
 )
 
 func main() {
-	if os.Getenv("YZMA_TEST_LIBS") != "" {
-		libPath = os.Getenv("YZMA_TEST_LIBS")
-	}
-
 	lib, err := loader.LoadLibrary(libPath)
 	if err != nil {
 		panic(err)
