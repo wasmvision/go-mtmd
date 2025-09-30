@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/hybridgroup/yzma/pkg/llama"
 	"github.com/hybridgroup/yzma/pkg/loader"
@@ -10,18 +11,27 @@ import (
 var (
 	modelFile            = "./models/SmolLM-135M.Q2_K.gguf"
 	prompt               = "Are you ready to rock?"
-	libPath              = "./lib"
+	libPath              = "."
 	responseLength int32 = 12
 )
 
 func main() {
-	lib, _ := loader.LoadLibrary(libPath)
-	llama.Load(lib)
+	if os.Getenv("YZMA_TEST_LIBS") != "" {
+		libPath = os.Getenv("YZMA_TEST_LIBS")
+	}
+
+	lib, err := loader.LoadLibrary(libPath)
+	if err != nil {
+		panic(err)
+	}
+	if err := llama.Load(lib); err != nil {
+		panic(err)
+	}
 
 	llama.BackendInit()
 	llama.GGMLBackendLoadAll()
 
-	//	llama.LogSet(llama.LogSilent(), uintptr(0))
+	llama.LogSet(llama.LogSilent(), uintptr(0))
 
 	model := llama.ModelLoadFromFile(modelFile, llama.ModelDefaultParams())
 	vocab := llama.ModelGetVocab(model)
@@ -48,9 +58,9 @@ func main() {
 		}
 
 		buf := make([]byte, 36)
-		llama.TokenToPiece(vocab, token, buf, 0, true)
+		len := llama.TokenToPiece(vocab, token, buf, 0, true)
 
-		fmt.Print(string(buf))
+		fmt.Print(string(buf[:len]))
 
 		batch = llama.BatchGetOne([]llama.Token{token})
 	}
