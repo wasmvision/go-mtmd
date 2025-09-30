@@ -66,7 +66,7 @@ func loadFuncs(lib ffi.Lib) error {
 		return err
 	}
 
-	if backendFreeFunc, err = lib.Prep("llama_backend_init", &ffi.TypeVoid); err != nil {
+	if backendFreeFunc, err = lib.Prep("llama_backend_free", &ffi.TypeVoid); err != nil {
 		return err
 	}
 
