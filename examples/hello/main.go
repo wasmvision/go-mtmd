@@ -23,8 +23,7 @@ func main() {
 		panic(err)
 	}
 
-	llama.BackendInit()
-	llama.GGMLBackendLoadAll()
+	llama.Init()
 
 	model := llama.ModelLoadFromFile(modelFile, llama.ModelDefaultParams())
 	vocab := llama.ModelGetVocab(model)
