@@ -1,9 +1,12 @@
 package llama
 
-import "github.com/jupiterrider/ffi"
+import (
+	"os"
+
+	"github.com/jupiterrider/ffi"
+)
 
 func Load(lib ffi.Lib) error {
-
 	if err := loadFuncs(lib); err != nil {
 		return err
 	}
@@ -37,4 +40,17 @@ func Load(lib ffi.Lib) error {
 	}
 
 	return nil
+}
+
+// Init is a convenience function to handle initialization of llama.cpp.
+func Init() {
+	BackendInit()
+
+	if os.Getenv("YZMA_LIB") != "" {
+		GGMLBackendLoadAllFromPath(os.Getenv("YZMA_LIB"))
+
+		return
+	}
+
+	GGMLBackendLoadAll()
 }
