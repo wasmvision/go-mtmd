@@ -28,6 +28,10 @@ func Load(lib ffi.Lib) error {
 		return err
 	}
 
+	if err := loadContextFuncs(lib); err != nil {
+		return err
+	}
+
 	if err := loadLogFuncs(lib); err != nil {
 		return err
 	}

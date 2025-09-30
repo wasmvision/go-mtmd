@@ -27,7 +27,7 @@ const (
 type Sampler uintptr
 
 var (
-	TypeSamplerChainParams = ffi.NewType(&ffi.TypePointer)
+	FFISamplerChainParams = ffi.NewType(&ffi.TypePointer)
 )
 
 var (
@@ -109,11 +109,11 @@ var (
 
 func loadSamplingFuncs(lib ffi.Lib) error {
 	var err error
-	if samplerChainDefaultParamsFunc, err = lib.Prep("llama_sampler_chain_default_params", &TypeSamplerChainParams); err != nil {
+	if samplerChainDefaultParamsFunc, err = lib.Prep("llama_sampler_chain_default_params", &FFISamplerChainParams); err != nil {
 		return err
 	}
 
-	if samplerChainInitFunc, err = lib.Prep("llama_sampler_chain_init", &ffi.TypePointer, &TypeSamplerChainParams); err != nil {
+	if samplerChainInitFunc, err = lib.Prep("llama_sampler_chain_init", &ffi.TypePointer, &FFISamplerChainParams); err != nil {
 		return err
 	}
 
@@ -189,6 +189,7 @@ func loadSamplingFuncs(lib ffi.Lib) error {
 	return nil
 }
 
+// SamplerChainDefaultParams returns the default parameters to create a new sampling chain.
 func SamplerChainDefaultParams() SamplerChainParams {
 	var p SamplerChainParams
 	samplerChainDefaultParamsFunc.Call(unsafe.Pointer(&p))
@@ -196,6 +197,7 @@ func SamplerChainDefaultParams() SamplerChainParams {
 	return p
 }
 
+// SamplerChainInit initializes a new sampling chain.
 func SamplerChainInit(params SamplerChainParams) Sampler {
 	var p Sampler
 	samplerChainInitFunc.Call(unsafe.Pointer(&p), unsafe.Pointer(&params))
@@ -203,6 +205,7 @@ func SamplerChainInit(params SamplerChainParams) Sampler {
 	return p
 }
 
+// SamplerChainAdd adds a sampler to a sampling chain.
 func SamplerChainAdd(chain Sampler, smpl Sampler) {
 	samplerChainAddFunc.Call(nil, unsafe.Pointer(&chain), unsafe.Pointer(&smpl))
 }
