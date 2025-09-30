@@ -1,6 +1,7 @@
 package loader
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
 
@@ -8,6 +9,10 @@ import (
 )
 
 func LoadLibrary(path string) (ffi.Lib, error) {
+	if os.Getenv("YZMA_LIB") != "" {
+		path = os.Getenv("YZMA_LIB")
+	}
+
 	var filename string
 	switch runtime.GOOS {
 	case "linux", "freebsd":

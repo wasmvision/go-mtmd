@@ -1,7 +1,6 @@
 package llama
 
 import (
-	"os"
 	"testing"
 
 	"github.com/hybridgroup/yzma/pkg/loader"
@@ -27,10 +26,6 @@ func TestChat(t *testing.T) {
 
 func testSetup(t *testing.T) {
 	testPath := "../../lib"
-	if os.Getenv("YZMA_TEST_LIBS") != "" {
-		testPath = os.Getenv("YZMA_TEST_LIBS")
-	}
-
 	lib, err := loader.LoadLibrary(testPath)
 	if err != nil {
 		t.Fatal("unable to load libary", err.Error())
