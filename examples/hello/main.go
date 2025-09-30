@@ -8,10 +8,10 @@ import (
 )
 
 var (
-	modelFile            = "./models/tinyllama-1.1b-chat-v1.0.Q2_K.gguf"
+	modelFile            = "./models/SmolLM-135M.Q2_K.gguf"
 	prompt               = "Are you ready to rock?"
 	libPath              = "./lib"
-	responseLength int32 = 64
+	responseLength int32 = 12
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 	llama.Load(lib)
 
 	llama.BackendInit()
-	llama.LogSet(llama.LogSilent(), uintptr(0))
+	//	llama.LogSet(llama.LogSilent(), uintptr(0))
 
 	model := llama.ModelLoadFromFile(modelFile, llama.ModelDefaultParams())
 	vocab := llama.ModelGetVocab(model)
