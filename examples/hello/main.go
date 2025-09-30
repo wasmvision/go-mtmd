@@ -26,7 +26,7 @@ func main() {
 	llama.BackendInit()
 	llama.GGMLBackendLoadAll()
 
-	llama.LogSet(llama.LogSilent(), uintptr(0))
+	//llama.LogSet(llama.LogSilent(), uintptr(0))
 
 	model := llama.ModelLoadFromFile(modelFile, llama.ModelDefaultParams())
 	vocab := llama.ModelGetVocab(model)
