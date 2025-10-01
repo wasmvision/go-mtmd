@@ -77,6 +77,9 @@ var (
 	// MTMD_API mtmd_input_chunks *      mtmd_input_chunks_init(void);
 	inputChunksInitFunc ffi.Fun
 
+	// MTMD_API void mtmd_input_chunks_free(mtmd_input_chunks * chunks);
+	inputChunksFreeFunc ffi.Fun
+
 	// MTMD_API size_t mtmd_input_chunks_size(const mtmd_input_chunks * chunks);
 	inputChunksSizeFunc ffi.Fun
 
@@ -122,6 +125,10 @@ func loadFuncs(lib ffi.Lib) error {
 	}
 
 	if inputChunksInitFunc, err = lib.Prep("mtmd_input_chunks_init", &ffi.TypePointer); err != nil {
+		return err
+	}
+
+	if inputChunksFreeFunc, err = lib.Prep("mtmd_input_chunks_free", &ffi.TypeVoid, &ffi.TypePointer); err != nil {
 		return err
 	}
 
@@ -182,6 +189,11 @@ func InputChunksInit() InputChunks {
 	inputChunksInitFunc.Call(unsafe.Pointer(&chunks))
 
 	return chunks
+}
+
+// InputChunksFree frees the InputChunks.
+func InputChunksFree(chunks InputChunks) {
+	inputChunksFreeFunc.Call(nil, unsafe.Pointer(&chunks))
 }
 
 // InputChunksSize returns the number of InputChunk in the list.
