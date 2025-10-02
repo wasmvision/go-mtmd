@@ -2,34 +2,66 @@
 
 Here are a few examples of yzma with language models that appear to work.
 
-## VLM using Qwen2.5-VL-3B-Instruct-Q8_0
+Don't forget to set your `YZMA_LIB` env variable to the directory with your `llama.cpp` library files.
+
+## Vision Language Models (VLM)
+
+### Qwen2.5-VL-3B-Instruct-Q8_0
+
+https://huggingface.co/ggml-org/Qwen2.5-VL-3B-Instruct-GGUF
 
 ```
-go run ./examples/vlm/ -model ~/models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf -proj ~/models/mmproj-Qwen2.5-VL-3B-Instruct-Q8_0.gguf -image ./images/domestic_llama.jpg -prompt "What is in this picture?" 2>/dev/null
+go run ./examples/vlm/ -model ~/models/Qwen2.5-VL-3B-Instruct-Q8_0.gguf -mmproj ~/models/mmproj-Qwen2.5-VL-3B-Instruct-Q8_0.gguf -image ./images/domestic_llama.jpg -p "What is in this picture?" 2>/dev/null
 ```
 
-## VLM using moondream2-20250414-GGUF
+### moondream2-20250414-GGUF
+
+https://huggingface.co/ggml-org/moondream2-20250414-GGUF
 
 ```
-go run ./examples/vlm/ -model ~/models/moondream2-text-model-f16_ct-vicuna.gguf -proj ~/models/moondream2-mmproj-f16-20250414.gguf -image ./images/domestic_llama.jpg -prompt "What is in this picture?" 2>/dev/null
+go run ./examples/vlm/ -model ~/models/moondream2-text-model-f16_ct-vicuna.gguf -mmproj ~/models/moondream2-mmproj-f16-20250414.gguf -image ./images/domestic_llama.jpg -p "What is in this picture?" 2>/dev/null
 ```
 
-## Chat using qwen2.5-0.5b-instruct-fp16
+## Text generation models
+
+### qwen2.5-0.5b-instruct-fp16
 
 ```
-go run ./demo/chat/ -model ~/models/qwen2.5-0.5b-instruct-fp16.gguf -temp=0.6 -n=512
+go run ./examples/chat/ -model ~/models/qwen2.5-0.5b-instruct-fp16.gguf -temp=0.6 -n=512
 ```
 
-## Chat using tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf
+### tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf
+
+https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/blob/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf
 
 ```
-go run ./demo/chat/ -model ~/models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf -c 2048 -temp 0.7 -n 512
+go run ./examples/chat/ -model ~/models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf -c 2048 -temp 0.7 -n 512 -sys "You are a helpful robot companion."
 ```
 
-## Chat using gemma-3-1b-it-Q4_K_M.gguf
+### gemma-3-1b-it-Q4_K_M.gguf
 
 https://huggingface.co/ggml-org/gemma-3-1b-it-GGUF/blob/main/gemma-3-1b-it-Q4_K_M.gguf
 
 ```
 go run ./examples/chat/ -model ~/models/gemma-3-1b-it-Q4_K_M.gguf
+```
+
+## Visual Language Action (VLA) models
+
+### InternVLA-M1.Q8_0
+
+https://huggingface.co/mradermacher/InternVLA-M1-GGUF/blob/main/InternVLA-M1.Q8_0.gguf
+
+```
+go run ./examples/vlm/ -model ~/models/InternVLA-M1.Q8_0.gguf -mmproj ~/models/InternVLA-M1.mmproj-Q8_0.gguf -image ./images/domestic_llama.jpg -p "What is in this picture? Provide a description and bounding box for each item of interest." -sys "You are a helpful robotic drone camera currently in flight." 2>/dev/null
+```
+
+```
+Loading model /home/ron/models/InternVLA-M1.Q8_0.gguf
+encoding image slice...
+image slice encoded in 986 ms
+decoding image batch 1/1, n_tokens_batch = 910
+image decoded (batch 1/1) in 121 ms
+
+{"label": "llama", "bbox_2d": [43, 352, 647, 822]}
 ```
