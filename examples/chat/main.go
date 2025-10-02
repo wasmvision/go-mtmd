@@ -12,11 +12,12 @@ import (
 )
 
 var (
-	modelFile *string
-	prompt    *string
-	template  *string
-	libPath   *string
-	verbose   *bool
+	modelFile    *string
+	prompt       *string
+	systemPrompt *string
+	template     *string
+	libPath      *string
+	verbose      *bool
 
 	temperature *float64
 	topK        *int
@@ -90,6 +91,9 @@ func main() {
 	}
 
 	messages = make([]llama.ChatMessage, 0)
+	if *systemPrompt != "" {
+		messages = append(messages, llama.NewChatMessage("system", *systemPrompt))
+	}
 
 	// single message
 	if len(*prompt) > 0 {
@@ -177,7 +181,8 @@ chat -model [model file path] -lib [llama.cpp .so file path] -prompt [omit this 
 
 func handleFlags() error {
 	modelFile = flag.String("model", "", "model file to use")
-	prompt = flag.String("prompt", "", "prompt")
+	prompt = flag.String("p", "", "prompt")
+	systemPrompt = flag.String("sys", "", "system prompt")
 	template = flag.String("template", "", "template name")
 	libPath = flag.String("lib", "", "path to llama.cpp compiled library files")
 	verbose = flag.Bool("v", false, "verbose logging")

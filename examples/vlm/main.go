@@ -13,12 +13,27 @@ import (
 )
 
 var (
-	modelFile *string
-	projFile  *string
-	prompt    *string
-	template  *string
-	imageFile *string
-	libPath   *string
+	modelFile    *string
+	projFile     *string
+	imageFile    *string
+	prompt       *string
+	systemPrompt *string
+	template     *string
+	libPath      *string
+	verbose      *bool
+
+	temperature *float64
+	topK        *int
+	topP        *float64
+	minP        *float64
+	contextSize *int
+	predictSize *int
+	batchSize   *int
+
+	vocab   llama.Vocab
+	model   llama.Model
+	lctx    llama.Context
+	sampler llama.Sampler
 
 	messages []llama.ChatMessage
 )
@@ -58,6 +73,7 @@ func main() {
 	defer llama.Free(lctx)
 
 	vocab := llama.ModelGetVocab(model)
+	// TODO: pass in flags as params to samplers
 	sampler := llama.NewSampler(model, llama.DefaultSamplers)
 	mtmdCtx := mtmd.InitFromFile(*projFile, model, mtmd.ContextParamsDefault())
 	defer mtmd.Free(mtmdCtx)
@@ -66,7 +82,11 @@ func main() {
 		*template = llama.ModelChatTemplate(model, "")
 	}
 
-	messages = []llama.ChatMessage{llama.NewChatMessage("user", *prompt+mtmd.DefaultMarker())}
+	messages = make([]llama.ChatMessage, 0)
+	if *systemPrompt != "" {
+		messages = append(messages, llama.NewChatMessage("system", *systemPrompt))
+	}
+	messages = append(messages, llama.NewChatMessage("user", *prompt+mtmd.DefaultMarker()))
 
 	output := mtmd.InputChunksInit()
 	input := mtmd.NewInputText(chatTemplate(true), true, true)
@@ -123,11 +143,22 @@ vlm -model [model file path] -proj [projector file path] -lib [llama.cpp .so fil
 
 func handleFlags() error {
 	modelFile = flag.String("model", "", "model file to use")
-	projFile = flag.String("proj", "", "projector file to use")
-	prompt = flag.String("prompt", "what is this?", "prompt")
-	template = flag.String("template", "", "template name")
+	projFile = flag.String("mmproj", "", "projector file to use")
 	imageFile = flag.String("image", "", "image file to use")
+	prompt = flag.String("p", "", "prompt")
+	systemPrompt = flag.String("sys", "", "system prompt")
+	template = flag.String("template", "", "template name")
 	libPath = flag.String("lib", "", "path to llama.cpp compiled library files")
+	verbose = flag.Bool("v", false, "verbose logging")
+
+	temperature = flag.Float64("temp", 0.8, "temperature for model")
+	topK = flag.Int("top-k", 40, "top-k for model")
+	minP = flag.Float64("min-p", 0.1, "min-p for model")
+	topP = flag.Float64("top-p", 0.9, "top-p for model")
+
+	contextSize = flag.Int("c", 4096, "context size for model")
+	predictSize = flag.Int("n", -1, "predict size for model")
+	batchSize = flag.Int("b", 2048, "max batch size for model")
 
 	flag.Parse()
 
