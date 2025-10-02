@@ -15,9 +15,16 @@ var (
 	modelFile *string
 	prompt    *string
 	template  *string
-	maxTokens *int
 	libPath   *string
 	verbose   *bool
+
+	temperature *float64
+	topK        *int
+	topP        *float64
+	minP        *float64
+	contextSize *int
+	predictSize *int
+	batchSize   *int
 
 	vocab   llama.Vocab
 	model   llama.Model
@@ -56,19 +63,30 @@ func main() {
 	vocab = llama.ModelGetVocab(model)
 
 	ctxParams := llama.ContextDefaultParams()
-	ctxParams.NCtx = 4096
-	ctxParams.NBatch = 2048
+	ctxParams.NCtx = uint32(*contextSize)
+	ctxParams.NBatch = uint32(*batchSize)
 
 	lctx = llama.InitFromModel(model, ctxParams)
 	defer llama.Free(lctx)
 
 	sampler = llama.SamplerChainInit(llama.SamplerChainDefaultParams())
-	llama.SamplerChainAdd(sampler, llama.SamplerInitMinP(0.05, 1))
-	llama.SamplerChainAdd(sampler, llama.SamplerInitTempExt(0.7, 0, 1.0))
+	if *topK != 0 {
+		llama.SamplerChainAdd(sampler, llama.SamplerInitTopK(int32(*topK)))
+	}
+	if *topP < 1.0 {
+		llama.SamplerChainAdd(sampler, llama.SamplerInitTopP(float32(*topP), 1))
+	}
+	if *minP > 0 {
+		llama.SamplerChainAdd(sampler, llama.SamplerInitMinP(float32(*minP), 1))
+	}
+	llama.SamplerChainAdd(sampler, llama.SamplerInitTempExt(float32(*temperature), 0, 1.0))
 	llama.SamplerChainAdd(sampler, llama.SamplerInitDist(llama.DEFAULT_SEED))
 
 	if *template == "" {
 		*template = llama.ModelChatTemplate(model, "")
+	}
+	if *template == "" {
+		*template = "chatml"
 	}
 
 	messages = make([]llama.ChatMessage, 0)
@@ -84,7 +102,7 @@ func main() {
 	// chat session
 	first := true
 	for {
-		fmt.Print("Enter prompt: ")
+		fmt.Print("USER> ")
 		reader := bufio.NewReader(os.Stdin)
 		pmpt, err := reader.ReadString('\n')
 		if err != nil {
@@ -122,7 +140,7 @@ func chat(text string, first bool) {
 	fmt.Println()
 
 	response := ""
-	for pos := int32(0); pos+batch.NTokens < int32(*maxTokens); pos += batch.NTokens {
+	for pos := int32(0); pos+batch.NTokens < int32(*predictSize); pos += batch.NTokens {
 		llama.Decode(lctx, batch)
 		token := llama.SamplerSample(sampler, lctx, -1)
 
@@ -161,9 +179,17 @@ func handleFlags() error {
 	modelFile = flag.String("model", "", "model file to use")
 	prompt = flag.String("prompt", "", "prompt")
 	template = flag.String("template", "", "template name")
-	maxTokens = flag.Int("maxtokens", -1, "maximum number of tokens to process")
 	libPath = flag.String("lib", "", "path to llama.cpp compiled library files")
 	verbose = flag.Bool("v", false, "verbose logging")
+
+	temperature = flag.Float64("temp", 0.8, "temperature for model")
+	topK = flag.Int("top-k", 40, "top-k for model")
+	minP = flag.Float64("min-p", 0.1, "min-p for model")
+	topP = flag.Float64("top-p", 0.9, "top-p for model")
+
+	contextSize = flag.Int("c", 4096, "context size for model")
+	predictSize = flag.Int("n", -1, "predict size for model")
+	batchSize = flag.Int("b", 2048, "max batch size for model")
 
 	flag.Parse()
 
@@ -179,8 +205,8 @@ func handleFlags() error {
 		return errors.New("missing lib flag or YZMA_LIB env var")
 	}
 
-	if *maxTokens < 0 {
-		*maxTokens = llama.MaxToken
+	if *predictSize < 0 {
+		*predictSize = *contextSize //llama.MaxToken
 	}
 
 	return nil
