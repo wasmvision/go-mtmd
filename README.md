@@ -6,7 +6,7 @@
 
 It uses the [`purego`](https://github.com/ebitengine/purego) and [`ffi`](https://github.com/JupiterRider/ffi) packages so calls can be made directly to `llama.cpp` without CGo.
 
-This example uses the [SmolLM-135M.Q2_K](https://huggingface.co/QuantFactory/SmolLM-135M-GGUF) model:
+This example uses the [SmolLM-135M](https://huggingface.co/QuantFactory/SmolLM-135M-GGUF) model:
 
 ```go
 package main
@@ -73,6 +73,8 @@ $ go run ./examples/hello/ 2>/dev/null
 
 The first thing you need to do is learn how to use a computer.
 ```
+
+What's with the `2>/dev/null` at the end? That is the "easy way" to suppress the logging from `llama.cpp`.
 
 ## Installation
 
